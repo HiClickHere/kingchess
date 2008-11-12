@@ -1,0 +1,6 @@
+Punch Entertainment
+Deploy Ego HTTP server howto
+1) Get the latest build at http://homer/svn/PROJECTS/server/EgoHTTPServer/EgoHTTPServer/dist/EgoHTTPServer.war
+2) Deploy on Tomcat
+3) Open TOMCAT_WEBAPPS_DIR/EgoHTTPServer/WEB-INF/web.xml by text editor, change database information and location of log file.
+4) Reload the EgoHTTPServer app.

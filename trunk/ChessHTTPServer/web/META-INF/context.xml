@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Context path="/ChessHTTPServer">
+  <ResourceLink global="jdbc/EgoDB" name="jdbc/EgoDB" type="javax.sql.Datasource"/>
+</Context>
