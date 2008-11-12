@@ -1,0 +1,9 @@
+MIDlet-1: Chess,,main.ChessMIDlet
+MIDlet-Jar-Size: 27204
+MIDlet-Jar-URL: KingChess.jar
+MIDlet-Name: KingChess
+MIDlet-Permissions: javax.microedition.io.Connector.http
+MIDlet-Vendor: Vendor
+MIDlet-Version: 1.0
+MicroEdition-Configuration: CLDC-1.0
+MicroEdition-Profile: MIDP-2.0
