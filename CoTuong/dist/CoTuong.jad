@@ -1,0 +1,8 @@
+MIDlet-1: ChessMidlet, ,main.ChessMidlet
+MIDlet-Jar-Size: 83555
+MIDlet-Jar-URL: CoTuong.jar
+MIDlet-Name: CoTuong
+MIDlet-Vendor: Vendor
+MIDlet-Version: 1.0
+MicroEdition-Configuration: CLDC-1.0
+MicroEdition-Profile: MIDP-2.0
