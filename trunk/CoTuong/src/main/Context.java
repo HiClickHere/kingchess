@@ -109,7 +109,8 @@ public class Context //        implements Runnable
         mNetwork = Network.createNetworkHandler(this);
         mCanvas = new MainCanvas(this);
         mLobbyList = new Vector();
-        mURL = getProperty("Server-URL", "http://dongnh.blogdns.net:8282/ChessServletV2/ChessServlet");
+        //http://dongnh.blogdns.net:3664/services/ChessServlet
+        mURL = getProperty("Server-URL", "http://localhost:8282/ChessServletV2/ChessServlet");
     }
 
     private String getProperty(String name, String defaultVal) {

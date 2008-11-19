@@ -68,6 +68,7 @@ public class ScreenOnlinePlay extends Screen {
     public final static int STATE_ON_CHALLENGE = 8;
     public final static int STATE_NOTIFY = 9;
     
+    
     public String mReceiplientName;
 
     public void onActivate() {
@@ -308,7 +309,7 @@ public class ScreenOnlinePlay extends Screen {
                                 if (mState == STATE_CONNECTING)
                                     dismissDialog();
                                 addDialog(in.readString16().toJavaString(), -1, SOFTKEY_OK, STATE_NOTIFY);
-                                break;                                
+                                break;                                                                
                                 
                             default:                                
                                 in.skip(size);
@@ -429,6 +430,7 @@ public class ScreenOnlinePlay extends Screen {
 //                                } catch (Exception e) {
 //                                    e.printStackTrace();
 //                                }
+                                addDialog("Chức năng này chưa hoàn thành.", -1, SOFTKEY_OK, STATE_NOTIFY);
                                 break;
                             case BUTTON_TOP_PLAYERS:
                                 try {
@@ -535,6 +537,8 @@ public class ScreenOnlinePlay extends Screen {
                                     dismissDialog();                                    
                                 }
                             break;
+                            
+                                                                                  
                         }
                     }
                 }
@@ -591,6 +595,8 @@ public class ScreenOnlinePlay extends Screen {
                             break;
                         case STATE_NOTIFY:
                             break;
+                         
+                        
                     }
                 }
         }

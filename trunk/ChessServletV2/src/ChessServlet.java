@@ -324,10 +324,82 @@ public class ChessServlet
                             response.add(new String16(aMessage.mText)); // Trả về nội dung thông điệp
                         }
                         response.packResponse(Protocol.RESPONSE_NEW_MESSAGES, out);
-                    }
+                    }                                        
 
                     // Tìm kiếm các nước đi mới
                     if (status == STATUS_PLAYING) {
+                        
+                        int xsrc = 0, ysrc = 0, xdst = 0, ydst = 0;
+                        String move_player_name = "";
+                        long move_time = 0;
+                        boolean move_already = false;
+                        boolean room_found = false;
+                        String request_draw_username = "";
+                        boolean draw_game = false;
+
+                        // Tìm kiếm phòng chơi của người chơi này
+                        ps = aConnection.prepareStatement("SELECT * FROM room WHERE player1_name = ? AND player2_name = ?;");
+                        ps.setString(1, username.toJavaString());
+                        ps.setString(2, opponent_name);
+                        rs = ps.executeQuery();
+                        if (rs != null && rs.next()) {
+                            room_found = true;
+                            move_player_name = rs.getString("move_playername");
+                            xsrc = Integer.parseInt(rs.getString("move_src_x"));
+                            ysrc = Integer.parseInt(rs.getString("move_src_y"));
+                            xdst = Integer.parseInt(rs.getString("move_dst_x"));
+                            ydst = Integer.parseInt(rs.getString("move_dst_y"));
+                            move_time = Long.parseLong(rs.getString("move_time"));
+                            no_move = Integer.parseInt(rs.getString("no_move")) == 1;
+                            request_draw_username = rs.getString("request_draw_username");
+                            draw_game = Integer.parseInt(rs.getString("draw_game")) == 1;
+                        }
+                        rs.close();
+                        ps.close();
+
+                        if (!room_found) {
+                            ps = aConnection.prepareStatement("SELECT * FROM room WHERE player1_name = ? AND player2_name = ?;");
+                            ps.setString(1, opponent_name);
+                            ps.setString(2, username.toJavaString());
+                            rs = ps.executeQuery();
+                            if (rs != null && rs.next()) {
+                                room_found = true;
+                                move_player_name = rs.getString("move_playername");
+                                xsrc = Integer.parseInt(rs.getString("move_src_x"));
+                                ysrc = Integer.parseInt(rs.getString("move_src_y"));
+                                xdst = Integer.parseInt(rs.getString("move_dst_x"));
+                                ydst = Integer.parseInt(rs.getString("move_dst_y"));
+                                move_time = Long.parseLong(rs.getString("move_time"));
+                                no_move = Integer.parseInt(rs.getString("no_move")) == 1;
+                                request_draw_username = rs.getString("request_draw_username");
+                                draw_game = Integer.parseInt(rs.getString("draw_game")) == 1;
+                            }
+                            rs.close();
+                            ps.close();
+                        }
+                        
+                        if (room_found) {
+                            if (draw_game) {
+                                response.packResponse(Protocol.RESPONSE_THIS_IS_DRAW_GAME, out);
+                                ps = aConnection.prepareStatement("UPDATE user_info SET " +
+                                                " opponent_name = ?, " +
+                                                " status = ?," +
+                                                " last_update_move = ?," +
+                                                " draw_count = draw_count + 1 " +
+                                                " WHERE username = ?");
+                                ps.setString(1, "");
+                                ps.setInt(2, STATUS_ONLINE);
+                                ps.setLong(3, now);
+                                ps.setString(4, username.toJavaString());
+                                ps.executeUpdate();
+                                ps.close();
+                            }
+
+                            if (request_draw_username != null && request_draw_username.equals(opponent_name)) {
+                                response.packResponse(Protocol.RESPONSE_REQUEST_DRAW_GAME, out);
+                            }
+                        }
+                        
                         if (currentStatus == MYTURN_OFF) 
                         {
                             System.out.println("REQUEST_UPDATE_MY_GAME: wait for other player!!!");
@@ -348,48 +420,7 @@ public class ChessServlet
                         } else if (currentStatus == MYTURN_WAIT) // Người chơi ở trạng thái chờ đợi nước đi từ đối thủ
                         {                            
                             System.out.println("REQUEST_UPDATE_MY_GAME: not my turn");
-                            int xsrc = 0, ysrc = 0, xdst = 0, ydst = 0;
-                            String move_player_name = "";
-                            long move_time = 0;
-                            boolean move_already = false;
-                            boolean room_found = false;
                             
-                            // Tìm kiếm phòng chơi của người chơi này
-                            ps = aConnection.prepareStatement("SELECT * FROM room WHERE player1_name = ? AND player2_name = ?;");
-                            ps.setString(1, username.toJavaString());
-                            ps.setString(2, opponent_name);
-                            rs = ps.executeQuery();
-                            if (rs != null && rs.next()) {
-                                room_found = true;
-                                move_player_name = rs.getString("move_playername");
-                                xsrc = Integer.parseInt(rs.getString("move_src_x"));
-                                ysrc = Integer.parseInt(rs.getString("move_src_y"));
-                                xdst = Integer.parseInt(rs.getString("move_dst_x"));
-                                ydst = Integer.parseInt(rs.getString("move_dst_y"));
-                                move_time = Long.parseLong(rs.getString("move_time"));
-                                no_move = Integer.parseInt(rs.getString("no_move")) == 1;
-                            }
-                            rs.close();
-                            ps.close();
-
-                            if (!room_found) {
-                                ps = aConnection.prepareStatement("SELECT * FROM room WHERE player1_name = ? AND player2_name = ?;");
-                                ps.setString(1, opponent_name);
-                                ps.setString(2, username.toJavaString());
-                                rs = ps.executeQuery();
-                                if (rs != null && rs.next()) {
-                                    room_found = true;
-                                    move_player_name = rs.getString("move_playername");
-                                    xsrc = Integer.parseInt(rs.getString("move_src_x"));
-                                    ysrc = Integer.parseInt(rs.getString("move_src_y"));
-                                    xdst = Integer.parseInt(rs.getString("move_dst_x"));
-                                    ydst = Integer.parseInt(rs.getString("move_dst_y"));
-                                    move_time = Long.parseLong(rs.getString("move_time"));
-                                    no_move = Integer.parseInt(rs.getString("no_move")) == 1;
-                                }
-                                rs.close();
-                                ps.close();
-                            }
 
 
                             System.out.println("REQUEST_UPDATE_MY_GAME: " + move_player_name + " " + xsrc + " " + ysrc + " " + xdst + " " + ydst + " " + move_time + " " + no_move);
@@ -405,8 +436,11 @@ public class ChessServlet
                                 else
                                     move_already = false;
                                 
-                                // Có nước đi mới
-                                if (move_already) 
+                                
+                                System.out.println("REQUEST_UPDATE_MY_GAME: " + request_draw_username);
+                                                              
+                                
+                                if (move_already) // Có nước đi mới
                                 {
                                     if (!no_move) // Đối thủ chưa hết cờ
                                     {
@@ -422,7 +456,8 @@ public class ChessServlet
                                         ps = aConnection.prepareStatement("UPDATE user_info SET " +
                                                 " opponent_name = ?, " +
                                                 " status = ?," +
-                                                " last_update_move = ? " +
+                                                " last_update_move = ?," +
+                                                " win_count = win_count + 1 " +
                                                 " WHERE username = ?");
                                         ps.setString(1, "");
                                         ps.setInt(2, STATUS_ONLINE);
@@ -849,7 +884,7 @@ public class ChessServlet
             case Protocol.REQUEST_TOP_PLAYERS:
                 try {
                     Vector aVector = new Vector();
-                    ps = aConnection.prepareStatement("SELECT * FROM user_info;");
+                    ps = aConnection.prepareStatement("SELECT * FROM user_info ORDER BY win_count DESC;");
                     rs = ps.executeQuery();
                     while (rs != null && rs.next()) {
                         PlayerRecord aPlayer = new PlayerRecord();
@@ -948,7 +983,8 @@ public class ChessServlet
                     ps = aConnection.prepareStatement("UPDATE user_info SET " +
                             " opponent_name = ?," +
                             " status = ?," +
-                            " is_your_turn = ?" +
+                            " is_your_turn = ?," +
+                            " lose_count = lose_count + 1" +
                             " WHERE username = ?");
                     ps.setString(1, "");
                     ps.setInt(2, STATUS_ONLINE);
@@ -1131,6 +1167,112 @@ public class ChessServlet
                     PunchLogger.logException(e.toString());
                     response.add(new String16("Lỗi: Máy chủ quá tải."));
                     response.packResponse(Protocol.RESPONSE_REJECT_MAKE_FRIEND_SUCCESSFULLY, out);
+                }
+                break;
+                
+            case Protocol.REQUEST_DRAW_GAME:
+                try {
+                    username = in.readString16();
+                    opponent_name = in.readString16().toJavaString();
+                    
+                    ps = aConnection.prepareStatement("UPDATE room SET " +
+                            " request_draw_username = ? " +
+                            " WHERE player1_name = ? AND player2_name = ?;");
+                    ps.setString(1, username.toJavaString());
+                    ps.setString(2, username.toJavaString());
+                    ps.setString(3, opponent_name);
+                    ps.executeUpdate();
+                    ps.close();
+
+                    ps = aConnection.prepareStatement("UPDATE room SET " +
+                            " request_draw_username = ? " +
+                            " WHERE player1_name = ? AND player2_name = ?;");
+                    ps.setString(1, username.toJavaString());
+                    ps.setString(2, opponent_name);
+                    ps.setString(3, username.toJavaString());                    
+                    ps.executeUpdate();
+                    ps.close();
+                    
+                    response.packResponse(Protocol.RESPONSE_DRAW_GAME_SUCCESSFULLY, out);
+                    
+                } catch (Exception e)
+                {
+                    PunchLogger.logException("ERROR: Lỗi xảy ra trong quá trình yêu cầu hòa.");
+                    PunchLogger.logException(e.toString());
+                    response.add(new String16("Lỗi: Máy chủ quá tải."));
+                    response.packResponse(Protocol.RESPONSE_DRAW_GAME_FAILURE, out);
+                }
+                break;
+            
+            case Protocol.REQUEST_I_AGREE_DRAW_GAME:
+                try {
+                    username = in.readString16();
+                    opponent_name = in.readString16().toJavaString();
+                    
+                    ps = aConnection.prepareStatement("UPDATE room SET " +
+                            " draw_game = ?," +
+                            " request_draw_username = ? " +
+                            " WHERE player1_name = ? AND player2_name = ?;");
+                    ps.setInt(1, 1);
+                    ps.setString(2, "");
+                    ps.setString(3, username.toJavaString());
+                    ps.setString(4, opponent_name);
+                    ps.executeUpdate();
+                    ps.close();
+
+                    ps = aConnection.prepareStatement("UPDATE room SET " +
+                            " draw_game = ?," +
+                            " request_draw_username = ? " +
+                            " WHERE player1_name = ? AND player2_name = ?;");
+                    ps.setInt(1, 1);
+                    ps.setString(2, "");
+                    ps.setString(3, opponent_name);
+                    ps.setString(4, username.toJavaString());                    
+                    ps.executeUpdate();
+                    ps.close();          
+                    
+                    response.packResponse(Protocol.RESPONSE_I_AGREE_DRAW_GAME_SUCCESSFULLY, out);
+                    
+                } catch (Exception e)
+                {
+                    PunchLogger.logException("ERROR: Lỗi xảy ra trong quá trình chấp nhận hòa.");
+                    PunchLogger.logException(e.toString());
+                    response.add(new String16("Lỗi: Máy chủ quá tải."));
+                    response.packResponse(Protocol.RESPONSE_I_AGREE_DRAW_GAME_FAILURE, out);
+                }
+                break;
+                
+            case Protocol.REQUEST_I_DENY_DRAW_GAME:
+                try {
+                    username = in.readString16();
+                    opponent_name = in.readString16().toJavaString();
+                    
+                    ps = aConnection.prepareStatement("UPDATE room SET " +
+                            " request_draw_username = ? " +
+                            " WHERE player1_name = ? AND player2_name = ?;");
+                    ps.setString(1, "");
+                    ps.setString(2, username.toJavaString());
+                    ps.setString(3, opponent_name);
+                    ps.executeUpdate();
+                    ps.close();
+
+                    ps = aConnection.prepareStatement("UPDATE room SET " +
+                            " request_draw_username = ? " +
+                            " WHERE player1_name = ? AND player2_name = ?;");
+                    ps.setString(1, "");
+                    ps.setString(2, opponent_name);
+                    ps.setString(3, username.toJavaString());                    
+                    ps.executeUpdate();
+                    ps.close();       
+                    
+                    response.packResponse(Protocol.RESPONSE_I_DENY_DRAW_GAME_SUCCESSFULLY, out);
+                    
+                } catch (Exception e)
+                {
+                    PunchLogger.logException("ERROR: Lỗi xảy ra trong quá trình từ chối hòa.");
+                    PunchLogger.logException(e.toString());
+                    response.add(new String16("Lỗi: Máy chủ quá tải."));
+                    response.packResponse(Protocol.RESPONSE_I_DENY_DRAW_GAME_FAILURE, out);
                 }
                 break;
         }

@@ -284,9 +284,9 @@ public class ScreenLobby extends ScreenOnlinePlay {
                             case BUTTON_LOBBY_SEND_MESSAGE:     
                                 FriendRecord aFriend = (FriendRecord) mLobbyList.elementAt(mSelectedPlayerIndex);
                                 mReceiplientName = aFriend.mUsername;
-                                mContext.mInputScreen.mTextBox.setLabel("Tin nhan");
-                                mContext.mInputScreen.mTextBox.setString("");
                                 mContext.mInputScreen.mTextBox.setConstraints(TextField.ANY);
+                                mContext.mInputScreen.mTextBox.setLabel("Tin nhan");
+                                mContext.mInputScreen.mTextBox.setString("");                                
                                 mContext.setDisplayTextBox();                                
                                 break;
                         }
@@ -429,8 +429,11 @@ public class ScreenLobby extends ScreenOnlinePlay {
         int column_width[] = {
             mContext.mTahomaOutlineBlue.getWidth("Hạng"),
             mContext.mTahomaOutlineBlue.getWidth("WWWWWWWWWW"),
-        };
+        };        
         String column_title[] = {"Hạng", "Tên"};
+        
+        if (mCurrentList == LIST_FRIENDS)
+            column_title[0] = "STT";
 
         int width = 0;
         for (int i = 0; i < column_width.length; i++) {
@@ -482,7 +485,7 @@ public class ScreenLobby extends ScreenOnlinePlay {
                 g.drawImage(mContext.mArrowRight, x - 10, y, Graphics.HCENTER | Graphics.VCENTER);
             }
 
-            mContext.mTahomaOutlineBlue.write(g, "" + aFriend.mID, x, y, Graphics.LEFT | Graphics.VCENTER);
+            mContext.mTahomaOutlineBlue.write(g, "" + (i + mStartDisplayIndex + 1), x, y, Graphics.LEFT | Graphics.VCENTER);
             x += (column_width[0] >> 1);
             x += (column_width[0] >> 1);
 
