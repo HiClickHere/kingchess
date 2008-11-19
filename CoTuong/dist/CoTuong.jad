@@ -1,9 +1,9 @@
 MIDlet-1: ChessMidlet, ,main.ChessMidlet
-MIDlet-Jar-Size: 174355
+MIDlet-Jar-Size: 174356
 MIDlet-Jar-URL: CoTuong.jar
 MIDlet-Name: CoTuong
 MIDlet-Vendor: Vendor
 MIDlet-Version: 1.0
 MicroEdition-Configuration: CLDC-1.0
 MicroEdition-Profile: MIDP-2.0
-Server-URL: http://dongnh.blogdns.net:8282/ChessServletV2/ChessServlet
+Server-URL: http://dongnh.blogdns.net:3664/services/ChessServlet
