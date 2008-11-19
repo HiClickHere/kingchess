@@ -4,12 +4,17 @@
  */
 package main;
 
+import core.ChessDataOutputStream;
 import core.FriendRecord;
+import core.Protocol;
 import core.Screen;
 import core.String16;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.util.Random;
 import java.util.Vector;
 import javax.microedition.lcdui.Graphics;
+import javax.microedition.lcdui.TextField;
 import util.Key;
 import util.Menu;
 import util.Utils;
@@ -18,7 +23,7 @@ import util.Utils;
  *
  * @author dong
  */
-public class ScreenLobby extends Screen {
+public class ScreenLobby extends ScreenOnlinePlay {
 
     private Vector mLobbyList;
     private boolean mNeedScrollDown;
@@ -30,39 +35,52 @@ public class ScreenLobby extends Screen {
     public Menu mMenu;
     public final static int MAX_RECORD_DISPLAY = 4;
     public boolean mIsDisplayMenu;
+    public final static int LIST_TOP_PLAYER = 0;
+    public final static int LIST_FRIENDS = 1;
+    public int mCurrentList;
+    
+    public final static int BUTTON_LOBBY_SEND_CHALLENGE = 0;
+    public final static int BUTTON_LOBBY_ADD_BUDDY = 1;
+    public final static int BUTTON_LOBBY_SEND_MESSAGE = 2;
 
-    public ScreenLobby(Context aContext) {
+    public ScreenLobby(Context aContext, int list) {
         super(aContext);
-        mLobbyList = new Vector();
+        mLobbyList = mContext.mLobbyList;
         mSelectedPlayerIndex = 0;
         mMenu = new Menu();
         mIsDisplayMenu = false;
+        mCurrentList = list;
     }
 
     public void addTestRecord() {
         Random aRan = new Random();
         String name[] = {
-            "DONGNH",
-            "MERCURY",
-            "NGUOIDOI",
-            "NGUOI",
-            "SIEUNHAN",
-            "NAMGA",
-            "ABDS",
-            "EEEPC",
-            "TRANANH",
-            "FUCK",
-            "CHIM"
+            "dongnh",
+            "mercury",
+            "nguoidoi",
+            "nguoi",
+            "sieunhan",
+            "namga",
+            "absd",
+            "eeepc",
+            "trananh",
+            "fuck",
+            "chim"
         };
-        for (int i = 0; i < 20; i++) {
+        for (int i = 0; i < 19; i++) {
             FriendRecord aFriendRecord = new FriendRecord();
             String aName = name[(Math.abs(aRan.nextInt()) % name.length)] + "" + (Math.abs(aRan.nextInt()) % 100);
-            aFriendRecord.mName = new String16(aName);
-            aFriendRecord.mIsOnline = ((Math.abs(aRan.nextInt()) % 2) == 0);
-            aFriendRecord.mRangkingIndex = i;
-            aFriendRecord.mWinCount = Math.abs(aRan.nextInt()) % 1000;
-            aFriendRecord.mLoseCount = Math.abs(aRan.nextInt()) % 1000;
-            aFriendRecord.mDrawCount = Math.abs(aRan.nextInt()) % 1000;
+            aFriendRecord.mID = i;
+            aFriendRecord.mUsername = aName;
+            aFriendRecord.mStatus = (Math.abs(aRan.nextInt()) % 4);
+        }
+
+        if (true) {
+            FriendRecord aFriendRecord = new FriendRecord();
+            String aName = "dongnh";
+            aFriendRecord.mID = 19;
+            aFriendRecord.mUsername = aName;
+            aFriendRecord.mStatus = (Math.abs(aRan.nextInt()) % 4);
             addLobbyToList(aFriendRecord);
         }
     }
@@ -72,14 +90,10 @@ public class ScreenLobby extends Screen {
         for (int i = 0; i < mLobbyList.size(); i++) {
             FriendRecord r = (FriendRecord) mLobbyList.elementAt(i);
             //update
-            if (r.mName == aRecord.mName) {
+            if (r.mUsername.equals(aRecord.mUsername)) {
                 r.mID = aRecord.mID;
-                r.mIsOnline = aRecord.mIsOnline;
-                r.mWinCount = aRecord.mWinCount;
-                r.mDrawCount = aRecord.mDrawCount;
-                r.mLoseCount = aRecord.mLoseCount;
-                r.mIsRequest = aRecord.mIsRequest;
-                found = true;
+                r.mUsername = aRecord.mUsername;
+                r.mStatus = aRecord.mStatus;
                 break;
             }
         }
@@ -90,6 +104,7 @@ public class ScreenLobby extends Screen {
     }
 
     public void onActivate() {
+        super.onActivate();
         mIsDisplayMenu = false;
         mMenu.setColors(0x5f7a7a, 0x708585);
         mMenu.addItem(0,
@@ -121,97 +136,276 @@ public class ScreenLobby extends Screen {
                 Graphics.HCENTER | Graphics.VCENTER);
         setSoftKey(SOFTKEY_BACK, -1, SOFTKEY_MENU);
     }
+    private long mLastUpdateStatusList = 0;
 
     public void onTick(long aMilliseconds) {
+        super.onTick(aMilliseconds);
         //mStartDisplayIndex = 0;
-        mNumberOfDisplay =
-                ((mLobbyList.size() - mStartDisplayIndex) > MAX_RECORD_DISPLAY)
-                ? MAX_RECORD_DISPLAY
-                : (mLobbyList.size() - mStartDisplayIndex);
-        mEndOfDisplayIndex = mLobbyList.size() - mNumberOfDisplay;
+        if (!mIsDisplayDialog) {
+            mNumberOfDisplay =
+                    ((mLobbyList.size() - mStartDisplayIndex) > MAX_RECORD_DISPLAY)
+                    ? MAX_RECORD_DISPLAY
+                    : (mLobbyList.size() - mStartDisplayIndex);
+            mEndOfDisplayIndex = mLobbyList.size() - mNumberOfDisplay;
 
-        if (mStartDisplayIndex == 0) {
-            mNeedScrollUp = false;
-        } else {
-            mNeedScrollUp = true;
+            if (mStartDisplayIndex == 0) {
+                mNeedScrollUp = false;
+            } else {
+                mNeedScrollUp = true;
+            }
+            if (mStartDisplayIndex < mEndOfDisplayIndex) {
+                mNeedScrollDown = true;
+            } else {
+                mNeedScrollDown = false;
+            }
         }
-        if (mStartDisplayIndex < mEndOfDisplayIndex) {
-            mNeedScrollDown = true;
-        } else {
-            mNeedScrollDown = false;
+
+        // cập nhật trạng thái player 1 phút 1 lần
+        if (System.currentTimeMillis() - mLastUpdateStatusList > 60000) {
+            if (mCurrentList == LIST_TOP_PLAYER) {
+                try {
+                    ByteArrayOutputStream aByteArray = new ByteArrayOutputStream();
+                    ChessDataOutputStream aOutput = new ChessDataOutputStream(aByteArray);
+                    mContext.mNetwork.sendMessage(Protocol.REQUEST_TOP_PLAYERS, aByteArray.toByteArray());
+                    mLastUpdateStatusList = System.currentTimeMillis();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            } else {
+                try {
+                    ByteArrayOutputStream aByteArray = new ByteArrayOutputStream();
+                    ChessDataOutputStream aOutput = new ChessDataOutputStream(aByteArray);
+                    aOutput.writeString16(new String16(mContext.mUsername));
+                    mContext.mNetwork.sendMessage(Protocol.REQUEST_NEED_FRIENDS_LIST, aByteArray.toByteArray());
+                    mLastUpdateStatusList = System.currentTimeMillis();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
         }
-        //repaint();
-        //serviceRepaints();
     }
 
     public void keyPressed(int keyCode) {
-        switch (keyCode) {
-            case Key.UP:
-                if (!mIsDisplayMenu) {
-                    if (mSelectedPlayerIndex > mStartDisplayIndex) {
-                        mSelectedPlayerIndex--;
-                    } else {
-                        if (mSelectedPlayerIndex > 0) {
+        if (!mIsDisplayDialog) {
+            switch (keyCode) {
+                case Key.UP:
+                    if (!mIsDisplayMenu) {
+                        if (mSelectedPlayerIndex > mStartDisplayIndex) {
                             mSelectedPlayerIndex--;
-                        //System.out.println("UP: " + mStartDisplayIndex);
-                        }
-                        if (mStartDisplayIndex > 0) {
-                            mStartDisplayIndex--;
-                            mNeedScrollDown = true;
                         } else {
-                            mNeedScrollUp = false;
-                            mNeedScrollDown = true;
+                            if (mSelectedPlayerIndex > 0) {
+                                mSelectedPlayerIndex--;
+                            //System.out.println("UP: " + mStartDisplayIndex);
+                            }
+                            if (mStartDisplayIndex > 0) {
+                                mStartDisplayIndex--;
+                                mNeedScrollDown = true;
+                            } else {
+                                mNeedScrollUp = false;
+                                mNeedScrollDown = true;
+                            }
                         }
-                    }
-                } else {
-                    mMenu.onDirectionKeys(0);
-                }
-                break;
-            case Key.DOWN:
-                if (!mIsDisplayMenu) {
-                    if (mSelectedPlayerIndex < mStartDisplayIndex + mNumberOfDisplay - 1) {
-                        mSelectedPlayerIndex++;
                     } else {
-                        //System.out.println("DOWN: " + mStartDisplayIndex);
-                        if (mStartDisplayIndex < mEndOfDisplayIndex) {
-                            mStartDisplayIndex++;
-                            mNeedScrollUp = true;
+                        mMenu.onDirectionKeys(0);
+                    }
+                    break;
+                case Key.DOWN:
+                    if (!mIsDisplayMenu) {
+                        if (mSelectedPlayerIndex < mStartDisplayIndex + mNumberOfDisplay - 1) {
+                            mSelectedPlayerIndex++;
                         } else {
-                            mNeedScrollUp = true;
-                            mNeedScrollDown = false;
+                            //System.out.println("DOWN: " + mStartDisplayIndex);
+                            if (mStartDisplayIndex < mEndOfDisplayIndex) {
+                                mStartDisplayIndex++;
+                                mNeedScrollUp = true;
+                            } else {
+                                mNeedScrollUp = true;
+                                mNeedScrollDown = false;
+                            }
+                        }
+                    } else {
+                        mMenu.onDirectionKeys(1);
+                    }
+                    break;
+                case Key.SOFT_LEFT:
+                    if (!mIsDisplayMenu) {
+                        ScreenOnlinePlay aOnlinePlayScreen = new ScreenOnlinePlay(mContext);
+                        mContext.setScreen(aOnlinePlayScreen);
+                    } else {
+                        mIsDisplayMenu = false;
+                        setSoftKey(SOFTKEY_BACK, -1, SOFTKEY_MENU);
+                    }
+                    break;
+                case Key.SELECT:
+                case Key.SOFT_RIGHT:
+                    if (!mIsDisplayMenu) {
+                        mIsDisplayMenu = true;
+                        setSoftKey(SOFTKEY_BACK, -1, SOFTKEY_OK);
+                    } else {
+                        switch (mMenu.selectedItem()) {
+                            case BUTTON_LOBBY_SEND_CHALLENGE:
+                                try {
+                                    FriendRecord aFriend = (FriendRecord) mLobbyList.elementAt(mSelectedPlayerIndex);
+                                    ByteArrayOutputStream aByteArray = new ByteArrayOutputStream();
+                                    ChessDataOutputStream aOutput = new ChessDataOutputStream(aByteArray);
+                                    //                                    aOutput.writeInt(mContext.mUserID);
+                                    //aOutput.writeInt(-1); // -1 meaning random user
+                                    aOutput.writeString16(new String16(mContext.mUsername));
+                                    mContext.mOpponentName = aFriend.mUsername;
+                                    aOutput.writeString16(new String16(mContext.mOpponentName));
+
+                                    mContext.mNetwork.sendMessage(Protocol.REQUEST_SEND_CHALLENGE, aByteArray.toByteArray());
+                                    //                                        mDialog.setText(StringConst.STR_CONNECTING_SERVER);
+                                    //                                        setSoftKey(SOFTKEY_CANCEL, -1, -1);
+                                    //                                        mIsDisplayDialog = true;
+                                    //                                        mState = STATE_CONNECTING;
+                                    addDialog(StringConst.STR_CONNECTING_SERVER,
+                                            SOFTKEY_CANCEL, -1,
+                                            STATE_CONNECTING);
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+                                break;
+                            case BUTTON_LOBBY_ADD_BUDDY:
+                                try {
+                                    FriendRecord aFriend = (FriendRecord) mLobbyList.elementAt(mSelectedPlayerIndex);
+                                    ByteArrayOutputStream aByteArray = new ByteArrayOutputStream();
+                                    ChessDataOutputStream aOutput = new ChessDataOutputStream(aByteArray);
+                                    aOutput.writeString16(new String16(mContext.mUsername));
+                                    aOutput.writeString16(new String16(aFriend.mUsername));
+                                    mContext.mNetwork.sendMessage(Protocol.REQUEST_MAKE_FRIEND, aByteArray.toByteArray());
+                                    mDialog.setText(StringConst.STR_CONNECTING_SERVER);
+                                    setSoftKey(SOFTKEY_CANCEL, -1, -1);
+                                    mIsDisplayDialog = true;
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+                                break;
+                            case BUTTON_LOBBY_SEND_MESSAGE:     
+                                FriendRecord aFriend = (FriendRecord) mLobbyList.elementAt(mSelectedPlayerIndex);
+                                mReceiplientName = aFriend.mUsername;
+                                mContext.mInputScreen.mTextBox.setLabel("Tin nhan");
+                                mContext.mInputScreen.mTextBox.setString("");
+                                mContext.mInputScreen.mTextBox.setConstraints(TextField.ANY);
+                                mContext.setDisplayTextBox();                                
+                                break;
                         }
                     }
-                } else {
-                    mMenu.onDirectionKeys(1);
-                }
-                break;
-            case Key.SOFT_LEFT:
-                if (!mIsDisplayMenu) {
-                    ScreenOnlinePlay aOnlinePlayScreen = new ScreenOnlinePlay(mContext);
-                    mContext.setScreen(aOnlinePlayScreen);
-                } else {
-                    mIsDisplayMenu = false;
-                    setSoftKey(SOFTKEY_BACK, -1, SOFTKEY_MENU);
-                }
-                break;
-            case Key.SELECT:
-            case Key.SOFT_RIGHT:
-                if (!mIsDisplayMenu) {
-                    mIsDisplayMenu = true;
-                    setSoftKey(SOFTKEY_BACK, -1, SOFTKEY_OK);
-                } else {
-                    switch (mMenu.selectedItem()) {
-                        case 0:
+                    break;
+            }
+        } else {
+            switch (keyCode) {
+                case Key.UP:
+                case Key.DOWN:
+                    mDialog.onKeyPressed(keyCode);
+                    break;
+                case Key.SELECT:
+                case Key.SOFT_RIGHT:
+                    if (mRightSoftkey == SOFTKEY_OK) {
+                        switch (mState) {
+                            case STATE_ASK_FOR_LOGOUT:
+                                if (mRightSoftkey == SOFTKEY_OK) {
+                                    dismissDialog();
+                                    try {
+                                        ByteArrayOutputStream aByteArray = new ByteArrayOutputStream();
+                                        ChessDataOutputStream aOutput = new ChessDataOutputStream(aByteArray);
+                                        aOutput.writeString16(new String16(mContext.mUsername));
+                                        aOutput.writeString16(new String16(mContext.mPassword));
+                                        mContext.mNetwork.sendMessage(Protocol.REQUEST_LOGOUT, aByteArray.toByteArray());
+                                        addDialog(StringConst.STR_CONNECTING_SERVER,
+                                                SOFTKEY_CANCEL, -1,
+                                                STATE_CONNECTING);
+                                    } catch (Exception e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+                                break;
+                            case STATE_CANNOT_CONNECT_TO_SERVER:
+                                if (mRightSoftkey == SOFTKEY_OK) {
+                                    dismissDialog();
+                                    setSoftKey(SOFTKEY_BACK, -1, SOFTKEY_OK);
+                                }
+                                break;
+                            case STATE_LOGOUT_SUCCESSFULLY:
+                            case STATE_LOGOUT_FAILURE:
+                            case STATE_LOSE_CONNECTION:
+                                if (mRightSoftkey == SOFTKEY_OK) {
+                                    dismissDialog();
+                                    ScreenMainMenu aMainMenu = new ScreenMainMenu(mContext);
+                                    aMainMenu.setMenu(ScreenMainMenu.MENU_MAIN);
+                                    mContext.setScreen(aMainMenu);
+                                }
+                                break;
+                            case STATE_ON_CHALLENGE:
+                                if (mRightSoftkey == SOFTKEY_OK) {
+                                    dismissDialog();
+                                    //remove all bellow challenge
+                                    int dialog_index = 1; // skip this dialog
+
+                                    while (dialog_index < mDialogVector.size()) {
+                                        DialogRecord aDialog = (DialogRecord) mDialogVector.elementAt(dialog_index);
+                                        if (aDialog.mState == STATE_ON_CHALLENGE) {
+                                            mDialogVector.removeElementAt(dialog_index);
+                                        } else {
+                                            dialog_index++;
+                                        }
+                                    }
+
+                                    try {
+                                        ByteArrayOutputStream aByteArray = new ByteArrayOutputStream();
+                                        ChessDataOutputStream aOutput = new ChessDataOutputStream(aByteArray);
+                                        aOutput.writeString16(new String16(mContext.mUsername));
+                                        aOutput.writeString16(new String16(mContext.mOpponentName));
+                                        mContext.mNetwork.sendMessage(Protocol.REQUEST_ACCEPT_CHALLENGE, aByteArray.toByteArray());
+                                        addDialog(StringConst.STR_CONNECTING_SERVER,
+                                                SOFTKEY_CANCEL, -1,
+                                                STATE_CONNECTING);
+                                    } catch (Exception e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+                                break;
+                        }
+                    }
+                    break;
+                case Key.SOFT_LEFT:
+                    switch (mState) {
+                        case STATE_ASK_FOR_LOGOUT:
+                            if (mLeftSoftkey == SOFTKEY_CANCEL) {
+                                dismissDialog();
+                                setSoftKey(SOFTKEY_BACK, -1, SOFTKEY_OK);
+                            }
                             break;
-                        case 1:
-                            ScreenAddBuddy aScreenAddBuddy = new ScreenAddBuddy(mContext, (FriendRecord) mLobbyList.elementAt(mSelectedPlayerIndex));
-                            mContext.setScreen(aScreenAddBuddy);
+                        case STATE_CONNECTING:
+                            if (mLeftSoftkey == SOFTKEY_CANCEL) {
+                                dismissDialog();
+                                mContext.mNetwork.stopConnection();
+                                setSoftKey(SOFTKEY_BACK, -1, SOFTKEY_OK);
+                            }
                             break;
-                        case 2:
+                        case STATE_ON_CHALLENGE:
+                            if (mLeftSoftkey == SOFTKEY_CANCEL) {
+                                dismissDialog();
+
+                                try {
+                                    ByteArrayOutputStream aByteArray = new ByteArrayOutputStream();
+                                    ChessDataOutputStream aOutput = new ChessDataOutputStream(aByteArray);
+                                    aOutput.writeString16(new String16(mContext.mUsername));
+                                    aOutput.writeString16(new String16(mContext.mOpponentName));
+                                    mContext.mNetwork.sendMessage(Protocol.REQUEST_REJECT_CHALLENGE, aByteArray.toByteArray());
+                                    addDialog(StringConst.STR_CONNECTING_SERVER,
+                                            SOFTKEY_CANCEL, -1,
+                                            STATE_CONNECTING);
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+
+                                mContext.mOpponentName = "";
+                            }
                             break;
                     }
-                }
-                break;
+                    break;
+            }
         }
     }
 
@@ -220,6 +414,10 @@ public class ScreenLobby extends Screen {
         g.setColor(0x708585);
         g.fillRect(0, 0, getWidth(), getHeight());
         String menu_name = StringConst.STR_TITLE_LOBBY;
+
+        if (mCurrentList == LIST_FRIENDS) {
+            menu_name = "BẠN BÈ";
+        }
         int w = getWidth() - 4;//mContext.mTahomaOutlineWhite.getWidth(menu_name) + 6;
 
         int h = mContext.mTahomaOutlineWhite.getHeight() + 4;
@@ -284,16 +482,18 @@ public class ScreenLobby extends Screen {
                 g.drawImage(mContext.mArrowRight, x - 10, y, Graphics.HCENTER | Graphics.VCENTER);
             }
 
-            mContext.mTahomaOutlineBlue.write(g, "" + aFriend.mRangkingIndex, x, y, Graphics.LEFT | Graphics.VCENTER);
+            mContext.mTahomaOutlineBlue.write(g, "" + aFriend.mID, x, y, Graphics.LEFT | Graphics.VCENTER);
             x += (column_width[0] >> 1);
             x += (column_width[0] >> 1);
 
             x += (column_width[1] >> 1);
             x += (column_width[1] >> 1);
-            if (aFriend.mIsOnline) {
-                mContext.mTahomaOutlineGreen.write(g, "" + aFriend.mName.toJavaString(), x, y, Graphics.RIGHT | Graphics.VCENTER);
+            if (aFriend.mStatus == 1) {
+                mContext.mTahomaOutlineGreen.write(g, "" + aFriend.mUsername, x, y, Graphics.RIGHT | Graphics.VCENTER);
+            } else if (aFriend.mStatus == 0) {
+                mContext.mTahomaOutlineBlue.write(g, "" + aFriend.mUsername, x, y, Graphics.RIGHT | Graphics.VCENTER);
             } else {
-                mContext.mTahomaOutlineBlue.write(g, "" + aFriend.mName.toJavaString(), x, y, Graphics.RIGHT | Graphics.VCENTER);
+                mContext.mTahomaOutlineRed.write(g, "" + aFriend.mUsername, x, y, Graphics.RIGHT | Graphics.VCENTER);
             }
             y += (mContext.mTahomaOutlineBlue.getHeight() >> 1) + 4;
         }
@@ -310,6 +510,10 @@ public class ScreenLobby extends Screen {
                     mContext.mTahomaOutlineGreen,
                     mContext.mTahomaOutlineWhite,
                     getWidth() >> 1, 30 + height + 10, Graphics.HCENTER | Graphics.TOP);
+        }
+
+        if (mIsDisplayDialog) {
+            mDialog.paint(g);
         }
 
         drawSoftkey(g);

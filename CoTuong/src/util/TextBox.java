@@ -257,6 +257,7 @@ public class TextBox {
     public void setEditableText(String aText)
     {
         mEditableText = new StringBuffer(aText);
+        mLines.removeAllElements();
         addParagraph(mEditableText.toString(), mFont);
         mCurso = mEditableText.length();
     }

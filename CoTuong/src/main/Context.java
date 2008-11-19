@@ -1,11 +1,13 @@
 package main;
 
 import core.ChessDataInputStream;
+import core.ChessDataOutputStream;
 import core.Event;
 import core.MainCanvas;
 import core.Network;
 import core.Protocol;
 import core.Screen;
+import core.String16;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
@@ -32,6 +34,10 @@ import util.UnicodeFont;
 public class Context 
 //        implements Runnable 
 {
+    
+    public final static int RESULT_LOSE = 0;
+    public final static int RESULT_DRAW = 1;
+    public final static int RESULT_WIN = 2;    
 
     //public Thread mMainThread;
     public boolean mIsRunning;
@@ -66,20 +72,26 @@ public class Context
     public Image mBoardImage;
     public static Context mMe;
     public boolean mIsLoggedIn;
-    public int mUserID;
-    public String mUsername;
-    public String mPassword;
+    //public int mUserID;
+    public String mUsername = "dongnh";
+    public String mPassword = "1234";
+    public String mOpponentName;
+    public boolean mIsMyTurn;
+    public boolean mIsOnlinePlay;
+    public int mMatchResult;
     public Network mNetwork;
     public long mLastSendStillOnline;
     public long mLastReceivedGoodConnect;
-    public final static long STILL_ONLINE_CYCLE = 5000;
-    public final static long MAXIMUM_LOST_CONNECTION_PERIOD = 60000;
+    public final static long STILL_ONLINE_CYCLE = 10000;
+    public final static long MAXIMUM_LOST_CONNECTION_PERIOD = 120000;
     public boolean mIsLoading = false;
     public MainCanvas mCanvas;
     public int mWidth;
-    public int mHeight;
+    public int mHeight;    
     
-    public Vector mChallengerList;
+    public Vector mLobbyList;
+    
+    //public Vector mChallengerList;
 
     /** Creates a new instance of Context */
     public Context(ChessMidlet aMIDlet) {
@@ -93,18 +105,19 @@ public class Context
         mBlackPieces = new Image[7];
         mNetwork = Network.createNetworkHandler(this);
         mCanvas = new MainCanvas(this);        
-        mChallengerList = new Vector();
+        mLobbyList = new Vector();
     }
 
     public void start() {
         ScreenLoading screenLoading = new ScreenLoading(this);
         screenLoading.setLoadingScript(ScreenLoading.LOADING_SCRIPT_FIRST_INIT);
         setScreen(screenLoading);
+        mInputScreen = new ScreenInput(this);
         Display.getDisplay(mMIDlet).setCurrent(mCanvas);
 //        mMainThread = new Thread(this);
 //        mMainThread.start();
         mIsRunning = true;
-        mCanvas.start();
+        mCanvas.start();        
     }
 
     public void stop() {
@@ -177,6 +190,20 @@ public class Context
                 mCurrentScreen.keyPressed(aKeyCode);
         }
     }
+    
+    public ScreenInput mInputScreen = null;
+    
+    public void setDisplayTextBox()
+    {   
+        fireEvent(new Event(Network.EVENT_TEXTBOX_FOCUS, null));
+        Display.getDisplay(mMIDlet).setCurrent(mInputScreen);        
+    }
+    
+    public void setDisplayMainCanvas()
+    {
+        fireEvent(new Event(Network.EVENT_TEXTBOX_INFOCUS, null));
+        Display.getDisplay(mMIDlet).setCurrent(mCanvas);        
+    }
 
     public void onTick(long aMilliseconds) {
         if (!mIsRunning) {
@@ -190,15 +217,18 @@ public class Context
                     fireEvent(new Event(Network.EVENT_LOSE_CONNECTION, null));
                 } else if (now - mLastSendStillOnline > STILL_ONLINE_CYCLE) {
                     ByteArrayOutputStream aByteArray = new ByteArrayOutputStream();
-                    DataOutputStream aOut = new DataOutputStream(aByteArray);
-                    aOut.writeInt(mUserID);
+                    ChessDataOutputStream aOut = new ChessDataOutputStream(aByteArray);
+//                    aOut.writeInt(mUserID);
+                    aOut.writeString16(new String16(mUsername));
+                    aOut.close();
                     mNetwork.sendMessage(Protocol.REQUEST_STILL_ONLINE, aByteArray.toByteArray());
                     mLastSendStillOnline = now;
                 }
             }
             mNetwork.onTick(aMilliseconds);
 
-            if (mCurrentScreen != null) {
+            if (mCurrentScreen != null) 
+            {
                 //if (!mIsLoading) 
                 {
                     mCurrentScreen.onTick(aMilliseconds);

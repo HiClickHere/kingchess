@@ -23,6 +23,9 @@ public class Network {
     public final static int EVENT_NETWORK_FAILURE = 4;    
     public final static int EVENT_LOSE_CONNECTION = 5;
     
+    public final static int EVENT_TEXTBOX_FOCUS = 6;
+    public final static int EVENT_TEXTBOX_INFOCUS = 7;
+    
     private static Network mSingleInstance = null;
     private Context mContext;      
     private ChessHTTPConnector mConnector;
