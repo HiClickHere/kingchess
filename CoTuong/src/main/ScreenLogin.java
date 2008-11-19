@@ -200,15 +200,15 @@ public class ScreenLogin extends Screen {
                 switch (mMenu.selectedItem())
                 {
                     case 0:
-                        mContext.mInputScreen.mTextBox.setString(mTextBoxes[0].getEditableText());
-                        mContext.mInputScreen.mTextBox.setMaxSize(12);
                         mContext.mInputScreen.mTextBox.setConstraints(TextField.ANY);
+                        mContext.mInputScreen.mTextBox.setString(mTextBoxes[0].getEditableText());
+                        mContext.mInputScreen.mTextBox.setMaxSize(12);                        
                         mContext.setDisplayTextBox();
                         break;
                     case 1:
-                        mContext.mInputScreen.mTextBox.setString(mTextBoxes[1].getEditableText());
-                        mContext.mInputScreen.mTextBox.setMaxSize(6);
                         mContext.mInputScreen.mTextBox.setConstraints(TextField.NUMERIC);
+                        mContext.mInputScreen.mTextBox.setString(mTextBoxes[1].getEditableText());
+                        mContext.mInputScreen.mTextBox.setMaxSize(6);                        
                         mContext.setDisplayTextBox();
                         break;
                 }
