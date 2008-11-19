@@ -17,6 +17,7 @@ public class ChessMidlet extends MIDlet {
     public Context mContext;
     
     public void startApp() {
+        System.out.println("startApp");
         if (mContext == null)
         {
             mContext = new Context(this);
@@ -27,16 +28,18 @@ public class ChessMidlet extends MIDlet {
     }
     
     public void pauseApp() {
+        System.out.println("pauseApp");
         if (mContext != null)
             mContext.stop();
     }
     
     public void destroyApp(boolean unconditional) {
+        System.out.println("destroyApp");
         if (mContext != null)
         {
             mContext.stop();
             mContext = null;
             System.gc();
         }        
-    }
+    }        
 }

@@ -19,6 +19,7 @@ import java.io.OutputStream;
 
 import javax.microedition.io.Connector;
 import javax.microedition.io.HttpConnection;
+import main.Context;
  
 public class ChessHTTPConnector implements Runnable {        
     private byte[] mRequestData;  
@@ -29,9 +30,7 @@ public class ChessHTTPConnector implements Runnable {
     private InputStream mInputStream = null;
     private OutputStream mOutputStream = null;
     
-    private static ChessHTTPConnector mInstance = null;
-    
-    public final static String SERVER_URL = "http://dongnh.blogdns.net:8282/ChessServletV2/ChessServlet";    
+    private static ChessHTTPConnector mInstance = null;        
 
     private ChessHTTPConnector(Network aNetwork) 
     {        
@@ -65,7 +64,7 @@ public class ChessHTTPConnector implements Runnable {
 
         try {
             mNetwork.onHTTPEvent(Network.EVENT_SETUP_CONNECTION);
-            mConnection = (HttpConnection)Connector.open(SERVER_URL);
+            mConnection = (HttpConnection)Connector.open(Context.mURL);
 
             // Set the request method and headers
             mConnection.setRequestMethod(HttpConnection.POST);                                

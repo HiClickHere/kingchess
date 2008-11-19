@@ -22,6 +22,7 @@ import util.UnicodeFont;
 public class ScreenLoading extends Screen {
     public final static int LOADING_SCRIPT_FIRST_INIT = 1;
     public final static int LOADING_SCRIPT_GAMEPLAY = 2;
+    public final static int LOADING_SCRIPT_GAMEPLAY_OFFLINE = 3;
     
     public int mPercentCompleted;
     public int mLoadingScript;
@@ -252,6 +253,59 @@ public class ScreenLoading extends Screen {
                         break;
                 }                
                 break;           
+            case LOADING_SCRIPT_GAMEPLAY_OFFLINE:
+                switch (mPercentCompleted)
+                {
+                    case 0:
+                        try
+                        {
+                            for (int i = 0; i < 7; i++)
+                            {
+                                mContext.mRedPieces[i] = Image.createImage("/res/img/game/red" + i + ".png");
+                            }
+                        } catch (Exception e)
+                        {
+                            e.printStackTrace();
+                        }
+                        System.gc();
+                        updatePercent(20);
+                        break;
+                    case 20:
+                        updatePercent(20);
+                        break;
+                    case 40:
+                        try
+                        {
+                            for (int i = 0; i < 7; i++)
+                            {
+                                mContext.mBlackPieces[i] = Image.createImage("/res/img/game/black" + i + ".png");
+                            }
+                        } catch (Exception e)
+                        {
+                            e.printStackTrace();
+                        }
+                        System.gc();
+                        updatePercent(20);
+                        break;
+                    case 60:
+                        updatePercent(20);
+                        break;
+                    case 80:
+                        updatePercent(20);
+                        break;
+                    case 100:
+                        try {
+                            mContext.mBoardImage = Image.createImage("/res/img/game/board.png");
+                        } catch (Exception e)
+                        {
+                            e.printStackTrace();
+                        }                        
+                        System.gc();                        
+                        mContext.mIsLoading = false;
+                        mContext.setScreen(new ScreenOfflineGamePlay(mContext));
+                        break;
+                }                
+                break;     
         }          
         
         mIsBusy = false;

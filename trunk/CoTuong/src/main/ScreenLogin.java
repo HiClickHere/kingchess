@@ -69,7 +69,10 @@ public class ScreenLogin extends Screen {
         mTextBoxes[0].mMarginX = 1;
         mTextBoxes[0].mLineSpace = 0;
 //        mTextBoxes[0].setEditable(true, 12);
-        mTextBoxes[0].setEditableText("");
+        if (mContext.mUsername != null && mContext.mUsername.length() > 0)
+            mTextBoxes[0].setEditableText(mContext.mUsername);
+        else
+            mTextBoxes[0].setEditableText("");
         mTextBoxes[1] = new TextBox(0x5f7a7a, Utils.lightenColor(0x5f7a7a, 30), 
                 getWidth() - 60, 18, Graphics.HCENTER | Graphics.VCENTER, 
                 mContext.mTahomaFontBlue);
@@ -141,10 +144,10 @@ public class ScreenLogin extends Screen {
                 switch (mMenu.selectedItem())
                 {
                     case 0:
-                        mTextBoxes[0].setEditableText(mContext.mInputScreen.mTextBox.getString());                        
+                        mTextBoxes[0].setEditableText(mContext.mInputScreen.mTextBox.getString().toLowerCase());                        
                         break;
                     case 1:
-                        mTextBoxes[1].setEditableText(mContext.mInputScreen.mTextBox.getString());                        
+                        mTextBoxes[1].setEditableText(mContext.mInputScreen.mTextBox.getString().toLowerCase());                        
                         break;
                 }
                 return true;
@@ -220,8 +223,8 @@ public class ScreenLogin extends Screen {
                     try {
                         ByteArrayOutputStream aByteArray = new ByteArrayOutputStream();
                         ChessDataOutputStream aOutput = new ChessDataOutputStream(aByteArray);  
-                        mContext.mUsername = mTextBoxes[0].getEditableText();
-                        mContext.mPassword = mTextBoxes[1].getEditableText();
+                        mContext.mUsername = mTextBoxes[0].getEditableText().toLowerCase();
+                        mContext.mPassword = mTextBoxes[1].getEditableText().toLowerCase();
                         aOutput.writeString16(new String16(mContext.mUsername));
                         aOutput.writeString16(new String16(mContext.mPassword));
                         mContext.mNetwork.sendMessage(Protocol.REQUEST_LOGIN, aByteArray.toByteArray());                    

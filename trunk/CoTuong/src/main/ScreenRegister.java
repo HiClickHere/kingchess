@@ -259,10 +259,10 @@ public class ScreenRegister extends Screen {
                 switch (mMenu.selectedItem())
                 {
                     case 0:
-                        mTextBoxes[0].setEditableText(mContext.mInputScreen.mTextBox.getString());                        
+                        mTextBoxes[0].setEditableText(mContext.mInputScreen.mTextBox.getString().toLowerCase());                        
                         break;
                     case 1:
-                        mTextBoxes[1].setEditableText(mContext.mInputScreen.mTextBox.getString());                        
+                        mTextBoxes[1].setEditableText(mContext.mInputScreen.mTextBox.getString().toLowerCase());                        
                         break;
                 }
                 return true;

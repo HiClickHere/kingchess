@@ -16,6 +16,7 @@ import java.util.Vector;
 import javax.microedition.lcdui.Display;
 import javax.microedition.lcdui.Graphics;
 import javax.microedition.lcdui.Image;
+import javax.microedition.rms.RecordStore;
 import util.ImageFont;
 import util.UnicodeFont;
 /*
@@ -31,13 +32,12 @@ import util.UnicodeFont;
  *
  * @author dong
  */
-public class Context 
-//        implements Runnable 
+public class Context //        implements Runnable 
 {
-    
+
     public final static int RESULT_LOSE = 0;
     public final static int RESULT_DRAW = 1;
-    public final static int RESULT_WIN = 2;    
+    public final static int RESULT_WIN = 2;
 
     //public Thread mMainThread;
     public boolean mIsRunning;
@@ -73,8 +73,8 @@ public class Context
     public static Context mMe;
     public boolean mIsLoggedIn;
     //public int mUserID;
-    public String mUsername = "dongnh";
-    public String mPassword = "1234";
+    public String mUsername;
+    public String mPassword;
     public String mOpponentName;
     public boolean mIsMyTurn;
     public boolean mIsOnlinePlay;
@@ -87,12 +87,15 @@ public class Context
     public boolean mIsLoading = false;
     public MainCanvas mCanvas;
     public int mWidth;
-    public int mHeight;    
-    
+    public int mHeight;
+    public Vector mMessageBox;
     public Vector mLobbyList;
+    public static String mURL;    
     
-    //public Vector mChallengerList;
+    public int mOfflineLevel;
+    public int mOfflineColor;
 
+    //public Vector mChallengerList;
     /** Creates a new instance of Context */
     public Context(ChessMidlet aMIDlet) {
         mMe = this;
@@ -104,8 +107,17 @@ public class Context
         mRedPieces = new Image[7];
         mBlackPieces = new Image[7];
         mNetwork = Network.createNetworkHandler(this);
-        mCanvas = new MainCanvas(this);        
+        mCanvas = new MainCanvas(this);
         mLobbyList = new Vector();
+        mURL = getProperty("Server-URL", "http://dongnh.blogdns.net:8282/ChessServletV2/ChessServlet");
+    }
+
+    private String getProperty(String name, String defaultVal) {
+        String tmp = mMIDlet.getAppProperty(name);
+        if (tmp == null || tmp.length() == 0) {
+            return defaultVal;
+        }
+        return tmp;
     }
 
     public void start() {
@@ -115,14 +127,159 @@ public class Context
         mInputScreen = new ScreenInput(this);
         Display.getDisplay(mMIDlet).setCurrent(mCanvas);
 //        mMainThread = new Thread(this);
-//        mMainThread.start();
+//        mMainThread.start();                        
+        loadDataStore();
         mIsRunning = true;
-        mCanvas.start();        
+        mCanvas.start();
+    }
+
+    public void loadDataStore() 
+    {
+        try {
+            byte[] aBytes = loadRMSData("COTUONG");
+            ByteArrayInputStream aByteArrayInput = new ByteArrayInputStream(aBytes);
+            ChessDataInputStream in = new ChessDataInputStream(aByteArrayInput);
+            mUsername = in.readString16().toJavaString();
+            System.out.println("LOAD: " + mUsername);
+        } catch (Exception e)
+        {
+            mUsername = "";
+        }        
+    }
+
+    public void saveDataStore() 
+    {
+        try {
+            ByteArrayOutputStream aBytesOut = new ByteArrayOutputStream();
+            ChessDataOutputStream out = new ChessDataOutputStream(aBytesOut);
+            out.writeString16(new String16(mUsername));
+            saveRMSData(aBytesOut.toByteArray(), "COTUONG");
+            System.out.println("SAVE: " + mUsername);
+        } catch (Exception e)
+        {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Load a byte array from the RMS.
+     * An array of bytes is loaded from a given record store in the RMS.
+     * The byte array must be located in the first record in the record store.
+     * For performance reasons only the first record is used.
+     * <p>
+     * If a record store with the given name does not exist an exception is
+     * thrown. If the record store exists, but it does not contain any records
+     * an exception is thrown.
+     * 
+     * @param recordStoreName record store name
+     * @return byte array found in the first record or <code>null</code>
+     * @throws NullPointerException if the record store could not be found
+     * @throws Exception on any other error
+     */
+    public static byte[] loadRMSData(String recordStoreName) throws Exception {
+        RecordStore recordStore = null;
+        byte[] result;
+
+        // Load data from the recordstore
+        try {
+
+            // Open a recordstore instance
+            recordStore = RecordStore.openRecordStore(recordStoreName, false);
+
+            // If there are no records present the method throws an exception
+            if (recordStore == null || recordStore.getNumRecords() < 1) {
+                throw new NullPointerException();
+            // Read the 1st record from the store.
+            // Only the 1st record is used for this record store.
+            }
+            result = recordStore.getRecord(1);
+        } catch (Exception ex) {
+            // On any errors rethrow the exception
+            throw ex;
+        } finally {
+            // Clean up, i.e. close the store in any situation.
+            // This block is not allowed to throw any exceptions.
+            try {
+                if (recordStore != null) {
+                    recordStore.closeRecordStore();
+                }
+            } catch (Exception e) {
+            }
+        }
+        // Return the result
+        return result;
+    }
+
+    /**
+     * Save a byte array to the RMS.
+     * An array of bytes is saved to a given record store in the RMS.
+     * <p>
+     * The byte array is stored into the first record in the record store.
+     * If the record store does not exist it is created. The contents of the
+     * first record of an existing record store are overwritten.
+     * 
+     * @param data the byte array to save
+     * @param recordStoreName record store name
+     * @throws Exception on any error
+     */
+    public static void saveRMSData(byte[] data, String recordStoreName)
+            throws Exception {
+        RecordStore recordStore = null;
+
+        try {
+            // Open the recordstore
+            recordStore = RecordStore.openRecordStore(recordStoreName, true);
+
+            // If there are no records present one record is created.
+            // The record will have recordid 1.
+            if (recordStore.getNumRecords() < 1) {
+                recordStore.addRecord(null, 0, 0);
+            // Store the data into the 1st record.
+            // Only the 1st record is used for this record store.
+            }
+            recordStore.setRecord(1, data, 0, data.length);
+        } catch (Exception ex) {
+            // On any errors rethrow the exception
+            throw ex;
+        } finally {
+            // Clean up, i.e. close the store in any situation.
+            // This block is not allowed to throw any exceptions.
+            try {
+                if (recordStore != null) {
+                    recordStore.closeRecordStore();
+                }
+            } catch (Exception e) {
+            }
+        }
+    }
+
+    /**
+     * Ensures that the data for a given record store is removed.
+     * It is ensured that calling <code>loadRMSData()</code> for the same record
+     * store after deleting will throw an exception.
+     * <p>
+     * This method throws no exceptions.
+     * 
+     * @param recordStoreName the name of the recordstore to delete
+     */
+    public static void deleteRMSData(String recordStoreName) {
+        /*
+         * The implementation here is very simple and it could very easily be
+         * implemented application specifically. However, if the Mobile API is
+         * transferred to another platform than J2ME we need an interface for this
+         * functionality.
+         */
+        try {
+            RecordStore.deleteRecordStore(recordStoreName);
+        } catch (Exception e) {
+            // Exceptions do not need to be handled.
+        }
     }
 
     public void stop() {
         mIsRunning = false;
         mCanvas.stop();
+        saveDataStore();
     }
 
     public void setScreen(Screen aScreen) {
@@ -180,29 +337,25 @@ public class Context
             }
         }
     }
-    
-    public void onKeyPressed(int aKeyCode)
-    {
-        if (mCurrentScreen != null)
-        {
+
+    public void onKeyPressed(int aKeyCode) {
+        if (mCurrentScreen != null) {
             System.out.println("onKeyPressed " + aKeyCode);
-            if (!mIsLoading)
+            if (!mIsLoading) {
                 mCurrentScreen.keyPressed(aKeyCode);
+            }
         }
     }
-    
     public ScreenInput mInputScreen = null;
-    
-    public void setDisplayTextBox()
-    {   
+
+    public void setDisplayTextBox() {
         fireEvent(new Event(Network.EVENT_TEXTBOX_FOCUS, null));
-        Display.getDisplay(mMIDlet).setCurrent(mInputScreen);        
+        Display.getDisplay(mMIDlet).setCurrent(mInputScreen);
     }
-    
-    public void setDisplayMainCanvas()
-    {
+
+    public void setDisplayMainCanvas() {
         fireEvent(new Event(Network.EVENT_TEXTBOX_INFOCUS, null));
-        Display.getDisplay(mMIDlet).setCurrent(mCanvas);        
+        Display.getDisplay(mMIDlet).setCurrent(mCanvas);
     }
 
     public void onTick(long aMilliseconds) {
@@ -227,8 +380,7 @@ public class Context
             }
             mNetwork.onTick(aMilliseconds);
 
-            if (mCurrentScreen != null) 
-            {
+            if (mCurrentScreen != null) {
                 //if (!mIsLoading) 
                 {
                     mCurrentScreen.onTick(aMilliseconds);
