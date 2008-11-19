@@ -21,6 +21,7 @@ import javax.microedition.lcdui.TextField;
 import ui.FastDialog;
 import util.ContextMenu;
 import util.Key;
+import ChessBoard.*;
 
 /**
  *
@@ -39,9 +40,9 @@ public class ScreenGamePlay extends Screen {
     public final static int BOARD_WIDTH = 9;
     public final static int BOARD_HEIGHT = 10;
     
-    public final static int BLACK_SHIFT = 10;
+    //public final static int BLACK_SHIFT = 10;
     
-    public int mBoard[][];
+    //public int mBoard[][];
     
     public Image mBoardImage;
     public Image mRedPieces[];
@@ -60,6 +61,8 @@ public class ScreenGamePlay extends Screen {
     
     protected Vector mDialogVector;
     protected int mState;
+    
+    private Chessboard myChessBoard;
 
     public void addDialog(String aString, int leftSoft, int rightSoft, int state) {
         mDialogVector.addElement(new DialogRecord(aString, leftSoft, -1, rightSoft, state));
@@ -83,7 +86,9 @@ public class ScreenGamePlay extends Screen {
     public ScreenGamePlay(Context aContext)
     {
         super(aContext);
-        mBoard = new int[BOARD_HEIGHT][BOARD_WIDTH];
+        //mBoard = new int[BOARD_HEIGHT][BOARD_WIDTH];
+        myChessBoard = new Chessboard();
+        
         mBoardImage = mContext.mBoardImage;
         mRedPieces = mContext.mRedPieces;
         mBlackPieces = mContext.mBlackPieces;
@@ -127,6 +132,7 @@ public class ScreenGamePlay extends Screen {
     
     public void resetBoard()
     {
+        /*
         for (int i = 0; i < BOARD_HEIGHT; i++)
             for (int j = 0; j < BOARD_WIDTH; j++)
                 mBoard[i][j] = -1;
@@ -168,6 +174,8 @@ public class ScreenGamePlay extends Screen {
         mBoard[6][4] = PIECE_SOLDIER;
         mBoard[6][6] = PIECE_SOLDIER;
         mBoard[6][8] = PIECE_SOLDIER;
+         */
+        myChessBoard.resetBoard();
     }
     
     public void onActivate()
@@ -396,21 +404,26 @@ public class ScreenGamePlay extends Screen {
         for (int i = 0; i < BOARD_HEIGHT; i++)
             for (int j = 0; j < BOARD_WIDTH; j++)
             {
-                if (mBoard[i][j] > -1)
-                {
-                    if (mBoard[i][j] >= 10)
-                    {
-                        if (j != mSelectedX || i != mSelectedY || mIsIndicatorUp)
-                            g.drawImage(mBlackPieces[mBoard[i][j] - 10], x + j * 19, y + i * 19, Graphics.HCENTER | Graphics.VCENTER);                                                    
+                Piece tmp = myChessBoard.getPieceAt(j, i);
+                if (tmp != null) {
+                    int imgIdx = 0;
+                    switch (tmp.getType()) {
+                        case ChessConst.PIECE_PAWN:     imgIdx = 6; break;
+                        case ChessConst.PIECE_CANNON:   imgIdx = 5; break;
+                        case ChessConst.PIECE_ROOK:     imgIdx = 4; break; 
+                        case ChessConst.PIECE_CAVALRY:  imgIdx = 3; break; 
+                        case ChessConst.PIECE_ELEPHANT: imgIdx = 2; break;
+                        case ChessConst.PIECE_BISHOP:   imgIdx = 1; break;
+                        case ChessConst.PIECE_GENERAL:  imgIdx = 0; break;
                     }
-                    else
-                    {
-                        if (j != mSelectedX || i != mSelectedY || mIsIndicatorUp)
-                            g.drawImage(mRedPieces[mBoard[i][j]], x + j * 19, y + i * 19, Graphics.HCENTER | Graphics.VCENTER);
+                    if (j != mSelectedX || i != mSelectedY || mIsIndicatorUp) {
+                        if (tmp.getColor()) 
+                            g.drawImage(mRedPieces[imgIdx], x + j * 19, y + i * 19, Graphics.HCENTER | Graphics.VCENTER); // red
+                        else g.drawImage(mBlackPieces[imgIdx], x + j * 19, y + i * 19, Graphics.HCENTER | Graphics.VCENTER); // black
                     }
                 }
-                
-                if (i == mSelectingY && j == mSelectingX && mContext.mIsMyTurn)
+                // Arrow
+                if (i == mSelectingY && j == mSelectingX)
                 {
                     g.drawImage(mContext.mArrowDown, 
                             x + j * 19, 
@@ -425,26 +438,36 @@ public class ScreenGamePlay extends Screen {
     }
     
     public void doMove(int srcX, int srcY, int dstX, int dstY)
-    {
-        mBoard[dstY][dstX] = mBoard[srcY][srcX];
-        mBoard[srcY][srcX] = -1;
+    {   
+        if (!mContext.mIsMyTurn) {
+            // opponent move, switch to upper
+            
+        }
         
-        if (mContext.mIsMyTurn && mContext.mIsOnlinePlay)
-        {
-            try {
-                ByteArrayOutputStream aByteArray = new ByteArrayOutputStream();
-                ChessDataOutputStream aOutput = new ChessDataOutputStream(aByteArray);
-                aOutput.writeString16(new String16(mContext.mUsername));
-                aOutput.writeString16(new String16(mContext.mOpponentName));
-                aOutput.writeInt(srcX);
-                aOutput.writeInt(srcY);
-                aOutput.writeInt(dstX);
-                aOutput.writeInt(dstY);
-                mContext.mNetwork.sendMessage(Protocol.REQUEST_I_DID_A_MOVE, aByteArray.toByteArray());
-                mContext.mIsMyTurn = false;
-            } catch (Exception e) {
-                e.printStackTrace();
-            }            
+        if (myChessBoard.tryMove(srcX, srcY, dstX, dstY)) {
+            if (mContext.mIsMyTurn && mContext.mIsOnlinePlay)
+            {
+                try {
+                    ByteArrayOutputStream aByteArray = new ByteArrayOutputStream();
+                    ChessDataOutputStream aOutput = new ChessDataOutputStream(aByteArray);
+                    aOutput.writeString16(new String16(mContext.mUsername));
+                    aOutput.writeString16(new String16(mContext.mOpponentName));
+                    aOutput.writeInt(srcX);
+                    aOutput.writeInt(srcY);
+                    aOutput.writeInt(dstX);
+                    aOutput.writeInt(dstY);
+                    mContext.mNetwork.sendMessage(Protocol.REQUEST_I_DID_A_MOVE, aByteArray.toByteArray());
+                    mContext.mIsMyTurn = false;
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }            
+            }
+        }
+        else {
+            // wrong move
+            if (!mContext.mIsMyTurn) {
+                // opponent move wrong, send respose
+            }
         }
     }
     

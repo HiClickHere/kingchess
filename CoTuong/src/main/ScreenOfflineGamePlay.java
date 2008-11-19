@@ -20,8 +20,8 @@ import xqwlight.Search;
  */
 public class ScreenOfflineGamePlay extends Screen {
 
-    private Position pos = new Position();
-    private Search search = new Search(pos, 12);
+    private Position pos;// = new Position();
+    private Search search; // = new Search(pos, 12);
     private String message;
     private int cursorX,  cursorY;
     private int sqSelected,  mvLast;
@@ -47,6 +47,7 @@ public class ScreenOfflineGamePlay extends Screen {
     private static final int PHASE_WAITING = 1;
     private static final int PHASE_THINKING = 2;
     private int phase;
+    private boolean isEndGame;
     
     public boolean mIsOnlinePlay;
     
@@ -108,8 +109,18 @@ public class ScreenOfflineGamePlay extends Screen {
         mDialog = new FastDialog(getWidth() - 40, getHeight() - 80);
         
         mDialogVector = new Vector();
+        
+        resetGame(); // reset for new game
     }
 
+    public void resetGame() {
+        // reset for new game
+        isEndGame = false;
+        //message = "Chúc mừng! Bạn đã thắng.";// : "Bạn đã thua...";
+        pos = new Position();
+        search = new Search(pos, 12);
+    }
+    
     public void onActivate() {
         cursorX = cursorY = 7;
         sqSelected = mvLast = 0;
@@ -232,6 +243,16 @@ public class ScreenOfflineGamePlay extends Screen {
             mContext.mTahomaOutlineGreen.write(g, "Suy nghĩ...", getWidth(), 0, Graphics.RIGHT | Graphics.TOP);
         }           
         
+        if (isEndGame) // end game
+        {
+            g.setColor(0);
+            int w = mContext.mTahomaOutlineGreen.getWidth(message);
+            g.fillRect((getWidth() - w)/2 , (getHeight() - mContext.mTahomaOutlineGreen.getHeight())/2
+                        , w, mContext.mTahomaOutlineGreen.getHeight());
+            mContext.mTahomaOutlineGreen.write(g, message, getWidth()/2, getHeight()/2
+                                            , Graphics.HCENTER | Graphics.VCENTER);
+        }    
+        
         if (mIsDisplayMenu)
         {
             mContextMenu.paint(g, getWidth(), getHeight(), Graphics.RIGHT | Graphics.BOTTOM);
@@ -246,6 +267,11 @@ public class ScreenOfflineGamePlay extends Screen {
     }
 
     public void keyPressed(int keyCode) {
+        if (isEndGame) { // start new game
+            ScreenOfflinePlay screenOffline = new ScreenOfflinePlay(mContext);
+            mContext.setScreen(screenOffline);
+        }
+        
         if (mIsDisplayDialog)
         {
             switch (keyCode)
@@ -341,6 +367,7 @@ public class ScreenOfflineGamePlay extends Screen {
         if (pos.isMate()) {
             //midlet.playSound(response < 0 ? RESP_WIN : RESP_LOSS);
             message = (response < 0 ? "Chúc mừng! Bạn đã thắng." : "Bạn đã thua...");
+            isEndGame = true;
             return true;
         }
         int vlRep = pos.repStatus(3);
@@ -349,11 +376,13 @@ public class ScreenOfflineGamePlay extends Screen {
 //			midlet.playSound(vlRep > Position.WIN_VALUE ? RESP_LOSS :
 //					vlRep < -Position.WIN_VALUE ? RESP_WIN : RESP_DRAW);
             message = (vlRep > Position.WIN_VALUE ? "Bạn thua" : vlRep < -Position.WIN_VALUE ? "Bạn thắng" : "Hòa");
+            isEndGame = true;
             return true;
         }
         if (pos.moveNum > 100) {
             //midlet.playSound(RESP_DRAW);
             message = "Cờ hòa";
+            isEndGame = true;
             return true;
         }
         if (response >= 0) {
