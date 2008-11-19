@@ -31,7 +31,7 @@ public class ChessHTTPConnector implements Runnable {
     
     private static ChessHTTPConnector mInstance = null;
     
-    public final static String SERVER_URL = "http://dongnh.blogdns.net:8282/services/ChessServlet";    
+    public final static String SERVER_URL = "http://dongnh.blogdns.net:8282/ChessServletV2/ChessServlet";    
 
     private ChessHTTPConnector(Network aNetwork) 
     {        

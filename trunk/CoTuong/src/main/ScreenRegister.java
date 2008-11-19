@@ -18,6 +18,7 @@ import core.String16;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import javax.microedition.lcdui.Graphics;
+import javax.microedition.lcdui.TextField;
 import ui.FastDialog;
 import util.Menu;
 import util.*;
@@ -67,20 +68,18 @@ public class ScreenRegister extends Screen {
         mTextBoxes[0].mMarginY = 1;
         mTextBoxes[0].mMarginX = 1;
         mTextBoxes[0].mLineSpace = 0;
-        mTextBoxes[0].setEditable(true, 12);
-        mTextBoxes[0].setEditableText("USERNAME");
+        //mTextBoxes[0].setEditable(true, 12);
+        mTextBoxes[0].setEditableText("");
         mTextBoxes[1] = new TextBox(0x5f7a7a, Utils.lightenColor(0x5f7a7a, 30),
                 getWidth() - 60, 18, Graphics.HCENTER | Graphics.VCENTER,
                 mContext.mTahomaFontBlue);
         mTextBoxes[1].mMarginY = 1;
         mTextBoxes[1].mMarginX = 1;
         mTextBoxes[1].mLineSpace = 0;
-        mTextBoxes[1].setEditable(true, 6);
-        mTextBoxes[1].setEditableText("PASSWORD");
+        //mTextBoxes[1].setEditable(true, 6);
+        mTextBoxes[1].setEditableText("");
 
-        mFocusTextBox = mTextBoxes[0];
-        mFocusTextBox.setColor(0x005500, Utils.lightenColor(0x005500, 30));
-        mTextBoxes[1].setColor(0x5f7a7a, Utils.lightenColor(0x5f7a7a, 30));
+        mFocusTextBox = null;
         
         mIsDisplayDialog = false;
     }
@@ -113,6 +112,22 @@ public class ScreenRegister extends Screen {
                 }
                 break;
             case Key.SELECT:
+                switch (mMenu.selectedItem())
+                {
+                    case 0:
+                        mContext.mInputScreen.mTextBox.setString(mTextBoxes[0].getEditableText());
+                        mContext.mInputScreen.mTextBox.setMaxSize(12);
+                        mContext.mInputScreen.mTextBox.setConstraints(TextField.ANY);
+                        mContext.setDisplayTextBox();
+                        break;
+                    case 1:
+                        mContext.mInputScreen.mTextBox.setString(mTextBoxes[1].getEditableText());
+                        mContext.mInputScreen.mTextBox.setMaxSize(6);
+                        mContext.mInputScreen.mTextBox.setConstraints(TextField.NUMERIC);
+                        mContext.setDisplayTextBox();
+                        break;
+                }
+                break;
             case Key.SOFT_RIGHT:
                 if (!mIsDisplayDialog)
                 {
@@ -154,39 +169,39 @@ public class ScreenRegister extends Screen {
                     setSoftKey(SOFTKEY_BACK, -1, SOFTKEY_OK);
                 }
                 break;
-            case Key.BACK:
-                if (mFocusTextBox != null) {
-                    mFocusTextBox.onBackspace();
-                }
-                break;
-            case Key.NUM_0:
-            case Key.NUM_1:
-            case Key.NUM_2:
-            case Key.NUM_3:
-            case Key.NUM_4:
-            case Key.NUM_5:
-            case Key.NUM_6:
-            case Key.NUM_7:
-            case Key.NUM_8:
-            case Key.NUM_9:
-                if (mFocusTextBox != null) {
-                    mFocusTextBox.onInput(keyCode);
-                }
-                break;
+//            case Key.BACK:
+//                if (mFocusTextBox != null) {
+//                    mFocusTextBox.onBackspace();
+//                }
+//                break;
+//            case Key.NUM_0:
+//            case Key.NUM_1:
+//            case Key.NUM_2:
+//            case Key.NUM_3:
+//            case Key.NUM_4:
+//            case Key.NUM_5:
+//            case Key.NUM_6:
+//            case Key.NUM_7:
+//            case Key.NUM_8:
+//            case Key.NUM_9:
+//                if (mFocusTextBox != null) {
+//                    mFocusTextBox.onInput(keyCode);
+//                }
+//                break;
         }
 
-        switch (mMenu.selectedItem()) {
-            case 0:
-                mFocusTextBox = mTextBoxes[0];
-                mFocusTextBox.setColor(0x005500, Utils.lightenColor(0x005500, 30));
-                mTextBoxes[1].setColor(0x5f7a7a, Utils.lightenColor(0x5f7a7a, 30));
-                break;
-            case 1:
-                mFocusTextBox = mTextBoxes[1];
-                mFocusTextBox.setColor(0x005500, Utils.lightenColor(0x005500, 30));
-                mTextBoxes[0].setColor(0x5f7a7a, Utils.lightenColor(0x5f7a7a, 30));
-                break;
-        }
+//        switch (mMenu.selectedItem()) {
+//            case 0:
+//                mFocusTextBox = mTextBoxes[0];
+//                mFocusTextBox.setColor(0x005500, Utils.lightenColor(0x005500, 30));
+//                mTextBoxes[1].setColor(0x5f7a7a, Utils.lightenColor(0x5f7a7a, 30));
+//                break;
+//            case 1:
+//                mFocusTextBox = mTextBoxes[1];
+//                mFocusTextBox.setColor(0x005500, Utils.lightenColor(0x005500, 30));
+//                mTextBoxes[0].setColor(0x5f7a7a, Utils.lightenColor(0x5f7a7a, 30));
+//                break;
+//        }
     }
     
     public boolean onEvent(Event event)
@@ -202,27 +217,29 @@ public class ScreenRegister extends Screen {
             case Network.EVENT_END_COMMUNICATION:
                 ByteArrayInputStream aByteArray = new ByteArrayInputStream(event.mData);
                 ChessDataInputStream in = new ChessDataInputStream(aByteArray);
+                int size;
                 try {
                     short returnType = in.readShort();
-                    if (returnType == Protocol.RESPONSE_REGISTER_SUCCESSFULLY)
-                    {                        
-                        //mContext.mIsLoggedIn = true;
-                        mContext.mUserID = in.readInt();
-                        mIsDisplayDialog = false;
-                        mDialog.setText("Đăng ký thành công. Tài khoản mới đã được tạo.");
-                        mIsDisplayDialog = true;
-                        mLastResponse = returnType;
-                        setSoftKey(-1, -1, SOFTKEY_OK);
-                    }
-                    else if (returnType == Protocol.RESPONSE_REGISTER_FAILURE)
+                    size = in.readInt();
+                    switch (returnType)
                     {
-                        //mContext.mIsLoggedIn = false;
-                        mContext.mUserID = -1;
-                        mIsDisplayDialog = false;
-                        mDialog.setText(in.readString16().toJavaString());
-                        mIsDisplayDialog = true;
-                        mLastResponse = returnType;
-                        setSoftKey(-1, -1, SOFTKEY_OK);
+                        case Protocol.RESPONSE_REGISTER_SUCCESSFULLY:                            
+                            mIsDisplayDialog = false;
+                            mDialog.setText("Đăng ký thành công. Tài khoản mới đã được tạo.");
+                            mIsDisplayDialog = true;
+                            mLastResponse = returnType;
+                            setSoftKey(-1, -1, SOFTKEY_OK);
+                            break;
+                        case Protocol.RESPONSE_REGISTER_FAILURE:  
+                            mIsDisplayDialog = false;
+                            mDialog.setText(in.readString16().toJavaString());
+                            mIsDisplayDialog = true;
+                            mLastResponse = returnType;
+                            setSoftKey(-1, -1, SOFTKEY_OK);
+                            break;
+                        default:
+                            in.skip(size);
+                            break;
                     }
                 } catch (Exception e)
                 {
@@ -233,6 +250,21 @@ public class ScreenRegister extends Screen {
             case Network.EVENT_SENDING:
                 return true;
             case Network.EVENT_SETUP_CONNECTION:                
+                return true;
+            
+            case Network.EVENT_TEXTBOX_FOCUS:                
+                return true;
+            
+            case Network.EVENT_TEXTBOX_INFOCUS:
+                switch (mMenu.selectedItem())
+                {
+                    case 0:
+                        mTextBoxes[0].setEditableText(mContext.mInputScreen.mTextBox.getString());                        
+                        break;
+                    case 1:
+                        mTextBoxes[1].setEditableText(mContext.mInputScreen.mTextBox.getString());                        
+                        break;
+                }
                 return true;
         }
         return false;
@@ -265,14 +297,9 @@ public class ScreenRegister extends Screen {
                 Graphics.HCENTER | Graphics.VCENTER);
 
         if (!mIsDisplayDialog)
-        {
-            if (mFocusTextBox == mTextBoxes[0]) {
-                mTextBoxes[0].paint(g, getWidth() >> 1, 70, Graphics.HCENTER | Graphics.VCENTER, true);
-                mTextBoxes[1].paint(g, getWidth() >> 1, 120, Graphics.HCENTER | Graphics.VCENTER, false);
-            } else {
-                mTextBoxes[0].paint(g, getWidth() >> 1, 70, Graphics.HCENTER | Graphics.VCENTER, false);
-                mTextBoxes[1].paint(g, getWidth() >> 1, 120, Graphics.HCENTER | Graphics.VCENTER, true);
-            }
+        {            
+            mTextBoxes[0].paint(g, getWidth() >> 1, 70, Graphics.HCENTER | Graphics.VCENTER, false);
+            mTextBoxes[1].paint(g, getWidth() >> 1, 120, Graphics.HCENTER | Graphics.VCENTER, false);         
         }
         else
         {
