@@ -148,7 +148,7 @@ public class ScreenOnlinePlay extends Screen {
         g.setClip(0, 0, getWidth(), getHeight());
         g.setColor(0x708585);
         g.fillRect(0, 0, getWidth(), getHeight());
-        String menu_name = StringConst.STR_TITLE_ONLINE_PLAY_MENU;
+        String menu_name = "CHƠI MẠNG";
         int w = getWidth() - 4;
         int h = mContext.mTahomaOutlineWhite.getHeight() + 4;
         int x = (getWidth() - w) >> 1;
@@ -307,7 +307,7 @@ public class ScreenOnlinePlay extends Screen {
                             case Protocol.RESPONSE_MAKE_FRIEND_FAILURE:                                
                                 if (mState == STATE_CONNECTING)
                                     dismissDialog();
-                                addDialog("Lỗi: Không thể kết bạn. Xin vui lòng kiểm tra lại tên đăng nhập của người đó.", -1, SOFTKEY_OK, STATE_NOTIFY);
+                                addDialog(in.readString16().toJavaString(), -1, SOFTKEY_OK, STATE_NOTIFY);
                                 break;                                
                                 
                             default:                                
@@ -341,7 +341,7 @@ public class ScreenOnlinePlay extends Screen {
                 if (mContext.mInputScreen.mTextBox.getLabel().equals("Ten")) // it's add buddy textbox
                 {
                     try {
-                        String name = mContext.mInputScreen.mTextBox.getString();
+                        String name = mContext.mInputScreen.mTextBox.getString().toLowerCase();
                         ByteArrayOutputStream aByteOutputArray = new ByteArrayOutputStream();
                         ChessDataOutputStream aOutput = new ChessDataOutputStream(aByteOutputArray);
                         aOutput.writeString16(new String16(mContext.mUsername));

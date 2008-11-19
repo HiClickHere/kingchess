@@ -59,7 +59,7 @@ public class ScreenMainMenu extends Screen {
                 mMenu = new Menu();
                 mMenu.setColors(0x5f7a7a, 0x708585);
                 mMenu.addItem(0,
-                        StringConst.STR_ONLINE_PLAY,
+                        "Chơi mạng",
                         false,
                         false,
                         20,
@@ -67,7 +67,7 @@ public class ScreenMainMenu extends Screen {
                         getWidth() >> 1,
                         -1,
                         Graphics.HCENTER | Graphics.VCENTER);
-                mMenu.addItem(1, StringConst.STR_OFFLINE_PLAY,
+                mMenu.addItem(1, "Chơi đơn",
                         false,
                         false,
                         20,
@@ -213,6 +213,29 @@ public class ScreenMainMenu extends Screen {
 
     public void keyPressed(int keyCode) {
         System.out.println("ScreenMainMenu KeyCode: " + keyCode);
+        
+        if (mIsDisplayDialog)
+        {
+            switch (keyCode)
+            {
+                case Key.SOFT_LEFT:
+                    if (mLeftSoftkey == SOFTKEY_CANCEL)
+                    {
+                        mIsDisplayDialog = false;
+                        setSoftKey(SOFTKEY_BACK, -1, SOFTKEY_OK);
+                    }
+                    break;
+                case Key.SOFT_RIGHT:
+                    if (mRightSoftkey == SOFTKEY_OK)
+                    {
+                        mContext.stop();
+                        mContext.mMIDlet.notifyDestroyed();
+                    }
+                    break;
+            }
+            return;
+        }
+        
         switch (keyCode) {
             case Key.UP:
                 if (mMenu != null) {
@@ -268,9 +291,11 @@ public class ScreenMainMenu extends Screen {
                                     break;
                                 case 1:
                                     //setMenu(MENU_OFFLINE_PLAY);
-                                    ScreenLoading aScreenLoading = new ScreenLoading(mContext);
-                                    aScreenLoading.setLoadingScript(ScreenLoading.LOADING_SCRIPT_GAMEPLAY);                                            
-                                    mContext.setScreen(aScreenLoading);
+//                                    ScreenLoading aScreenLoading = new ScreenLoading(mContext);
+//                                    aScreenLoading.setLoadingScript(ScreenLoading.LOADING_SCRIPT_GAMEPLAY_OFFLINE);                                            
+//                                    mContext.setScreen(aScreenLoading);
+                                    ScreenOfflinePlay screenOffline = new ScreenOfflinePlay(mContext);
+                                    mContext.setScreen(screenOffline);
                                     break;
                                 case 2:
                                     setMenu(MENU_OPTION);
@@ -282,7 +307,10 @@ public class ScreenMainMenu extends Screen {
                                     setMenu(MENU_ABOUT);
                                     break;
                                 case 5:
-                                    mContext.mMIDlet.notifyDestroyed();
+                                    mIsDisplayDialog = true;
+                                    mDialog.setText("Bạn có thực sự muốn thoát?");
+                                    setSoftKey(SOFTKEY_CANCEL, -1, SOFTKEY_OK);
+                                    //mContext.mMIDlet.notifyDestroyed();
                                     break;
                             }
                             break;
@@ -294,6 +322,9 @@ public class ScreenMainMenu extends Screen {
 //                {
                 switch (mCurrentMenu) {
                     case MENU_MAIN:
+                        mIsDisplayDialog = true;
+                        mDialog.setText("Bạn có thực sự muốn thoát?");
+                        setSoftKey(SOFTKEY_CANCEL, -1, SOFTKEY_OK);
                         break;
                     case MENU_OFFLINE_PLAY:
                         if (mLeftSoftkey == SOFTKEY_BACK) {
@@ -380,6 +411,9 @@ public class ScreenMainMenu extends Screen {
         if (mTextBox != null) {
             mTextBox.paint(g, getWidth() >> 1, getHeight() >> 1, Graphics.HCENTER | Graphics.VCENTER, false);
         }
+        
+        if (mIsDisplayDialog)
+            mDialog.paint(g);
 
         drawSoftkey(g);
     }

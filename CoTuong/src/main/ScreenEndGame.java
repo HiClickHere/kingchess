@@ -145,8 +145,11 @@ public class ScreenEndGame extends Screen {
     }
 
     public void keyPressed(int aKey) {
-        if (mIsDisplayDialog)
+        if (mIsDisplayDialog) {
+            if (mRightSoftkey == SOFTKEY_OK)
+                mIsDisplayDialog = false;
             return;
+        }
         
         switch (aKey) {
             case Key.UP:
@@ -206,8 +209,12 @@ public class ScreenEndGame extends Screen {
                     switch (returnType)
                     {                    
                         case Protocol.RESPONSE_MAKE_FRIEND_SUCCESSFULLY:
-                        case Protocol.RESPONSE_MAKE_FRIEND_FAILURE:
                             mIsDisplayDialog = false;
+                            setSoftKey(-1, -1, SOFTKEY_OK);
+                            break;
+                        case Protocol.RESPONSE_MAKE_FRIEND_FAILURE:
+                            mIsDisplayDialog = true;
+                            mDialog.setText(in.readString16().toJavaString());
                             setSoftKey(-1, -1, SOFTKEY_OK);
                             break;
                         default:                            
