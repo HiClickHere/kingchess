@@ -133,34 +133,26 @@ public class ScreenMainMenu extends Screen {
                         getHeight() - 40,
                         Graphics.HCENTER | Graphics.VCENTER,
                         mContext.mTahomaFontCyan);
-                mTextBox.addParagraph("On the margin of a lake in the " +
-                        "margin of the page a margin of 600d " +
-                        "to escape death by a narrow margin. ", mContext.mTahomaFontBlue);
-                mTextBox.addParagraph("His health is a " +
-                        "a Shakespeare " +
-                        "a Vietnamese grammar. " +
-                        "twice a week. ", mContext.mTahomaFontBlue);
-                mTextBox.addParagraph("On the margin of a lake in the " +
-                        "margin of the page a margin of 600d " +
-                        "to escape death by a narrow margin. ", mContext.mTahomaFontWhite);
-                mTextBox.addParagraph("His health is a " +
-                        "a Shakespeare " +
-                        "a Vietnamese grammar. " +
-                        "twice a week. ", mContext.mTahomaFontBlue);
-                mTextBox.addParagraph("On the margin of a lake in the " +
-                        "margin of the page a margin of 600d " +
-                        "to escape death by a narrow margin. ", mContext.mTahomaFontRed);
-                mTextBox.addParagraph("His health is a " +
-                        "a Shakespeare " +
-                        "a Vietnamese grammar. " +
-                        "twice a week. ", mContext.mTahomaFontBlue);
-                mTextBox.addParagraph("On the margin of a lake in the " +
-                        "margin of the page a margin of 600d " +
-                        "to escape death by a narrow margin. ", mContext.mTahomaOutlineBlue);
-                mTextBox.addParagraph("His health is a " +
-                        "a Shakespeare " +
-                        "a Vietnamese grammar. " +
-                        "twice a week. ", mContext.mTahomaOutlineRed);
+                mTextBox.addParagraph ("Điều khiển", mContext.mTahomaOutlineRed);
+                mTextBox.addParagraph("Các phím mũi tên: Điều khiển con trỏ. ", mContext.mTahomaOutlineGreen);
+                mTextBox.addParagraph("Phím Select/OK: Chọn các đề mục trên menu và chọn các quân cờ/vị trí trong game. ", mContext.mTahomaOutlineGreen);
+                mTextBox.addParagraph("Các phím Softkey: Thực hiện các chức năng có trên màn hình. Góc trái dưới ứng với softkey bên trái, phải dưới ứng với softkey bên phải. ", mContext.mTahomaOutlineGreen);
+                mTextBox.addParagraph("Các phím số/chữ: Dùng để nhập ký tự trong các textbox. ", mContext.mTahomaOutlineGreen);
+                mTextBox.addParagraph("", mContext.mTahomaOutlineGreen);
+                mTextBox.addParagraph ("Chơi mạng", mContext.mTahomaOutlineRed);
+                mTextBox.addParagraph("Mỗi người dùng phải đăng ký một tài khoản bằng chức năng đăng ký. Mỗi tài khoản bao gồm tên đăng nhập dài tối đa 12 ký tự viết thường và password dài tối đa 6 ký tự số.", mContext.mTahomaOutlineGreen);
+                mTextBox.addParagraph("Người dùng muốn tham gia phần chơi online phải đăng nhập bằng tài khoản đã đăng ký. ", mContext.mTahomaOutlineGreen);
+                mTextBox.addParagraph("Các người dùng có thể kết bạn và gửi tin nhắn cho nhau. ", mContext.mTahomaOutlineGreen);
+                mTextBox.addParagraph("Muốn bắt đầu một ván cờ thì có 3 cách: Cách một, bạn thách đấu với một ai đó trong danh sách Top cờ thủ hoặc danh sách bạn bè; " +
+                        "Cách hai, bạn chọn chức năng đấu ngẫu nhiên, máy chủ sẽ tìm kiếm cho bạn một cờ thủ khác cũng muốn đấu ngẫu nhiên; " +
+                        "Cách ba, bạn có thể đợi ai đó thách đấu với bạn. ", mContext.mTahomaOutlineGreen);
+                mTextBox.addParagraph("Trong phần chơi mạng, bạn có thể chat với đối thủ thông qua chức năng gửi tin nhắn. Nếu ván cờ không phân định được thắng thua bạn có thể" +
+                        " thỏa thuận với đối thủ để chấp nhận kết quả hòa. Nếu bạn rời khỏi cuộc chơi khi chưa ngã ngũ bạn sẽ bị xử thua. ", mContext.mTahomaOutlineGreen);
+                mTextBox.addParagraph("", mContext.mTahomaOutlineGreen);
+                mTextBox.addParagraph ("Chơi đơn", mContext.mTahomaOutlineRed);
+                mTextBox.addParagraph("Bạn sẽ đấu cờ với trí thông minh nhân tạo. Có ba cấp độ khó cho bạn thử sức. ", mContext.mTahomaOutlineGreen);
+                mTextBox.addParagraph("", mContext.mTahomaOutlineGreen);
+                mTextBox.addParagraph("Chúc bạn chơi vui vẻ!", mContext.mTahomaOutlineGreen);                        
                 mTextBox.setScrollBar(true, 0x5AD500, 0x6F6F6F);
                 break;
             case MENU_ABOUT:
@@ -169,38 +161,20 @@ public class ScreenMainMenu extends Screen {
                         Utils.lightenColor(0x5f7a7a, 20),
                         getWidth() - 10,
                         getHeight() - 40,
-                        Graphics.LEFT | Graphics.VCENTER,
+                        Graphics.HCENTER | Graphics.VCENTER,
                         mContext.mTahomaFontCyan);
-                mTextBox.setEditable(true, 255);
-                mTextBox.setEditableText("DONG");
-//                mTextBox.addParagraph("On the margin of a lake in the " +
-//                        "margin of the page a margin of 600d " +
-//                        "to escape death by a narrow margin. ", mContext.mTahomaFontBlue);
-//                mTextBox.addParagraph("His health is a " +
-//                        "a Shakespeare " +
-//                        "a Vietnamese grammar. " +
-//                        "twice a week. ", mContext.mTahomaFontBlue);
-//                mTextBox.addParagraph("On the margin of a lake in the " +
-//                        "margin of the page a margin of 600d " +
-//                        "to escape death by a narrow margin. ", mContext.mTahomaFontWhite);
-//                mTextBox.addParagraph("His health is a " +
-//                        "a Shakespeare " +
-//                        "a Vietnamese grammar. " +
-//                        "twice a week. ", mContext.mTahomaFontBlue);
-//                mTextBox.addParagraph("On the margin of a lake in the " +
-//                        "margin of the page a margin of 600d " +
-//                        "to escape death by a narrow margin. ", mContext.mTahomaFontRed);
-//                mTextBox.addParagraph("His health is a " +
-//                        "a Shakespeare " +
-//                        "a Vietnamese grammar. " +
-//                        "twice a week. ", mContext.mTahomaFontBlue);
-//                mTextBox.addParagraph("On the margin of a lake in the " +
-//                        "margin of the page a margin of 600d " +
-//                        "to escape death by a narrow margin. ", mContext.mTahomaOutlineBlue);
-//                mTextBox.addParagraph("His health is a " +
-//                        "a Shakespeare " +
-//                        "a Vietnamese grammar. " +
-//                        "twice a week. ", mContext.mTahomaOutlineRed);
+                mTextBox.addParagraph ("Thông tin", mContext.mTahomaOutlineRed);                
+                mTextBox.addParagraph("Xin cảm ơn bạn đã sử dụng sản phẩm game Cờ Tướng. ", mContext.mTahomaOutlineGreen);
+                mTextBox.addParagraph("", mContext.mTahomaOutlineGreen);
+                mTextBox.addParagraph("Sản phẩm có sử dụng engine mã nguồn mở XQWLight từ www.elephantbase.net với giấy phép GNU General Public License (GPL), GNU Library or Lesser General Public License (LGPL). ", mContext.mTahomaOutlineGreen);
+                mTextBox.addParagraph("", mContext.mTahomaOutlineGreen);
+                mTextBox.addParagraph("Xin cảm ơn bạn Nguyễn Doãn Hòa đã giúp đỡ tôi hoàn thành chương trình này. ", mContext.mTahomaOutlineGreen);
+                mTextBox.addParagraph("", mContext.mTahomaOutlineGreen);
+                mTextBox.addParagraph("Mọi thắc mắc và yêu cầu xin liên hệ ", mContext.mTahomaOutlineGreen);
+                mTextBox.addParagraph("Nguyễn Hà Đông", mContext.mTahomaOutlineGreen);                
+                mTextBox.addParagraph("nguyenhadoong@gmail.com", mContext.mTahomaOutlineGreen);                
+                mTextBox.addParagraph("SĐT: 090 659 6015", mContext.mTahomaOutlineGreen);                
+                
                 mTextBox.setScrollBar(true, 0x5AD500, 0x6F6F6F);
                 break;
         }
