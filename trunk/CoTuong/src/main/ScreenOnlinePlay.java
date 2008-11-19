@@ -305,7 +305,8 @@ public class ScreenOnlinePlay extends Screen {
                                 addDialog("Đã thêm vào danh sách bạn bè." , -1, SOFTKEY_OK, STATE_NOTIFY);
                                 break;
                             
-                            case Protocol.RESPONSE_MAKE_FRIEND_FAILURE:                                
+                            case Protocol.RESPONSE_MAKE_FRIEND_FAILURE:    
+                                System.out.println("called me");
                                 if (mState == STATE_CONNECTING)
                                     dismissDialog();
                                 addDialog(in.readString16().toJavaString(), -1, SOFTKEY_OK, STATE_NOTIFY);

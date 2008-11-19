@@ -272,11 +272,11 @@ public class ScreenLobby extends ScreenOnlinePlay {
                                     ByteArrayOutputStream aByteArray = new ByteArrayOutputStream();
                                     ChessDataOutputStream aOutput = new ChessDataOutputStream(aByteArray);
                                     aOutput.writeString16(new String16(mContext.mUsername));
-                                    aOutput.writeString16(new String16(aFriend.mUsername));
+                                    aOutput.writeString16(new String16(aFriend.mUsername));                                    
                                     mContext.mNetwork.sendMessage(Protocol.REQUEST_MAKE_FRIEND, aByteArray.toByteArray());
-                                    mDialog.setText(StringConst.STR_CONNECTING_SERVER);
-                                    setSoftKey(SOFTKEY_CANCEL, -1, -1);
-                                    mIsDisplayDialog = true;
+                                    addDialog(StringConst.STR_CONNECTING_SERVER,
+                                                                SOFTKEY_CANCEL, -1,
+                                                                STATE_CONNECTING);
                                 } catch (Exception e) {
                                     e.printStackTrace();
                                 }
@@ -364,6 +364,9 @@ public class ScreenLobby extends ScreenOnlinePlay {
                                         e.printStackTrace();
                                     }
                                 }
+                                break;
+                            case STATE_NOTIFY:
+                                dismissDialog();
                                 break;
                         }
                     }
