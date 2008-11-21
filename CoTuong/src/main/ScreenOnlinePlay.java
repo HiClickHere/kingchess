@@ -234,6 +234,7 @@ public class ScreenOnlinePlay extends Screen {
                             case Protocol.RESPONSE_ACCEPT_CHALLENGE_SUCCESSFULLY:                                
                                 mContext.mIsMyTurn = false;
                                 mContext.mIsOnlinePlay = true;
+                                mContext.mOfflineColor = 1;
                                 ScreenLoading aScreenLoading = new ScreenLoading(mContext);
                                 aScreenLoading.setLoadingScript(ScreenLoading.LOADING_SCRIPT_GAMEPLAY);
                                 mContext.setScreen(aScreenLoading);
@@ -260,6 +261,7 @@ public class ScreenOnlinePlay extends Screen {
                             case Protocol.RESPONSE_ACCEPT_CHALLENGE:                                
                                 mContext.mIsMyTurn = true;
                                 mContext.mIsOnlinePlay = true;
+                                mContext.mOfflineColor = 0;
                                 aScreenLoading = new ScreenLoading(mContext);
                                 aScreenLoading.setLoadingScript(ScreenLoading.LOADING_SCRIPT_GAMEPLAY);
                                 mContext.setScreen(aScreenLoading);

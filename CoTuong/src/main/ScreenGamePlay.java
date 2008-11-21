@@ -19,6 +19,17 @@ import xqwlight.Search;
  * @author dong
  */
 public class ScreenGamePlay extends Screen {
+    
+    public final static int PIECE_GENERAL = 0;
+    public final static int PIECE_GUARD = 1;
+    public final static int PIECE_ELEPHANT = 2;
+    public final static int PIECE_CAVALRY = 3;
+    public final static int PIECE_ROOK = 4;
+    public final static int PIECE_CANNON = 5;
+    public final static int PIECE_SOLDIER = 6;
+    
+    public final static int BOARD_WIDTH = 9;
+    public final static int BOARD_HEIGHT = 10;
 
     protected Position pos;// = new Position();
     protected Search search; // = new Search(pos, 12);
@@ -66,12 +77,7 @@ public class ScreenGamePlay extends Screen {
     public void dismissDialog() {
         mIsDisplayDialog = false;
         setSoftKey(-1, -1, -1);
-    }
-    public final static int BUTTON_CONTINUE = 0;
-    public final static int BUTTON_SEND_MESSAGE = 1;
-    public final static int BUTTON_REQUEST_DRAW_GAME = 2;
-    public final static int BUTTON_LEFT_GAME = 3;
-    public final static int BUTTON_QUIT = 4;
+    }    
 
     public ScreenGamePlay(Context aContext) {
         super(aContext);
@@ -122,28 +128,23 @@ public class ScreenGamePlay extends Screen {
         for (int i = 0; i < 8; i++) {
             imgPieces[i] = null;
         }
-        imgPieces[8] = mContext.mRedPieces[ScreenOnlineGamePlay.PIECE_GENERAL];
-        imgPieces[9] = mContext.mRedPieces[ScreenOnlineGamePlay.PIECE_GUARD];
-        imgPieces[10] = mContext.mRedPieces[ScreenOnlineGamePlay.PIECE_ELEPHANT];
-        imgPieces[11] = mContext.mRedPieces[ScreenOnlineGamePlay.PIECE_CAVALRY];
-        imgPieces[12] = mContext.mRedPieces[ScreenOnlineGamePlay.PIECE_ROOK];
-        imgPieces[13] = mContext.mRedPieces[ScreenOnlineGamePlay.PIECE_CANNON];
-        imgPieces[14] = mContext.mRedPieces[ScreenOnlineGamePlay.PIECE_SOLDIER];
+        imgPieces[8] = mContext.mRedPieces[PIECE_GENERAL];
+        imgPieces[9] = mContext.mRedPieces[PIECE_GUARD];
+        imgPieces[10] = mContext.mRedPieces[PIECE_ELEPHANT];
+        imgPieces[11] = mContext.mRedPieces[PIECE_CAVALRY];
+        imgPieces[12] = mContext.mRedPieces[PIECE_ROOK];
+        imgPieces[13] = mContext.mRedPieces[PIECE_CANNON];
+        imgPieces[14] = mContext.mRedPieces[PIECE_SOLDIER];
         imgPieces[15] = null;
 
-        imgPieces[16] = mContext.mBlackPieces[ScreenOnlineGamePlay.PIECE_GENERAL];
-        imgPieces[17] = mContext.mBlackPieces[ScreenOnlineGamePlay.PIECE_GUARD];
-        imgPieces[18] = mContext.mBlackPieces[ScreenOnlineGamePlay.PIECE_ELEPHANT];
-        imgPieces[19] = mContext.mBlackPieces[ScreenOnlineGamePlay.PIECE_CAVALRY];
-        imgPieces[20] = mContext.mBlackPieces[ScreenOnlineGamePlay.PIECE_ROOK];
-        imgPieces[21] = mContext.mBlackPieces[ScreenOnlineGamePlay.PIECE_CANNON];
-        imgPieces[22] = mContext.mBlackPieces[ScreenOnlineGamePlay.PIECE_SOLDIER];
+        imgPieces[16] = mContext.mBlackPieces[PIECE_GENERAL];
+        imgPieces[17] = mContext.mBlackPieces[PIECE_GUARD];
+        imgPieces[18] = mContext.mBlackPieces[PIECE_ELEPHANT];
+        imgPieces[19] = mContext.mBlackPieces[PIECE_CAVALRY];
+        imgPieces[20] = mContext.mBlackPieces[PIECE_ROOK];
+        imgPieces[21] = mContext.mBlackPieces[PIECE_CANNON];
+        imgPieces[22] = mContext.mBlackPieces[PIECE_SOLDIER];
         imgPieces[23] = null;
-
-//        if (flip)
-//        {
-//            responseMove();
-//        }
     }
 
     public void onTick(long aMilliseconds) {        
@@ -205,12 +206,13 @@ public class ScreenGamePlay extends Screen {
         if (flip) {
             sq = Position.SQUARE_FLIP(sq);
         }
+
         if (sq == sqSrc || sq == sqDst || sq == sqSelected) {
             //System.out.println("draw Cursor 1");
-            drawSquare(g, (pos.squares[sq] & 8) == 0 ? imgCursor2 : imgCursor, sq);
+            drawSquare(g, (pos.squares[sq] & Position.SIDE_TAG(pos.sdPlayer)) == 0 ? imgCursor2 : imgCursor, sq);
         } else {
-            //System.out.println("draw Cursor 2");
-            drawSquare(g, (pos.squares[sq] & 8) == 0 ? imgCursor : imgCursor2, sq);
+            //System.out.println("draw Cursor 2");            
+            drawSquare(g, (pos.squares[sq] & Position.SIDE_TAG(pos.sdPlayer)) == 0 ? imgCursor : imgCursor2, sq);            
         }
 
         if (mIsDisplayMenu) {
