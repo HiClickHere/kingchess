@@ -14,6 +14,9 @@ import util.Key;
  */
 public class ScreenOfflineGamePlay extends ScreenGamePlay { 
 
+    public final static int BUTTON_CONTINUE = 0;
+    public final static int BUTTON_QUIT = 1;
+    
     public ScreenOfflineGamePlay(Context aContext) {
         super(aContext);
         

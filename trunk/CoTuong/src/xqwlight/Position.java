@@ -931,6 +931,86 @@ public class Position {
 			return false;
 		}
 	}
+        
+        /**
+         * Dong created for check opponent moves
+         * @param mv
+         * @return
+         */
+        public boolean legalOpponentMove(int mv) {
+		int sqSrc = SRC(mv);
+		int pcSrc = squares[sqSrc];
+		int pcSelfSide = SIDE_TAG(sdPlayer);
+                
+                System.out.println("sqSrc: " + sqSrc);
+                System.out.println("pcSrc: " + pcSrc);
+                System.out.println("pcSelfSide: " + pcSelfSide);
+		
+                if ((pcSrc & pcSelfSide) == 0) {
+                    System.out.println("CheckMove: Wrong source pieces side.");
+			return false;
+		}
+
+		int sqDst = DST(mv);
+		int pcDst = squares[sqDst];
+		
+                if ((pcDst & pcSelfSide) != 0) {
+                    System.out.println("CheckMove: Wrong dest pieces side.");
+                    return false;
+		}
+
+		switch (pcSrc - pcSelfSide) {
+		case PIECE_KING:
+                        System.out.println("CheckMove: PIECE_KING.");
+			return IN_FORT(sqDst) && KING_SPAN(sqSrc, sqDst);
+		case PIECE_ADVISOR:
+                    System.out.println("CheckMove: PIECE_ADVISOR.");
+			return IN_FORT(sqDst) && ADVISOR_SPAN(sqSrc, sqDst);
+		case PIECE_BISHOP:
+                    System.out.println("CheckMove: PIECE_BISHOP.");
+			return SAME_HALF(sqSrc, sqDst) && BISHOP_SPAN(sqSrc, sqDst) &&
+					squares[BISHOP_PIN(sqSrc, sqDst)] == 0;
+		case PIECE_KNIGHT:
+                    System.out.println("CheckMove: PIECE_KNIGHT.");
+			int sqPin = KNIGHT_PIN(sqSrc, sqDst);
+			return sqPin != sqSrc && squares[sqPin] == 0;
+		case PIECE_ROOK:
+		case PIECE_CANNON:
+                    System.out.println("CheckMove: PIECE_ROOK or PIECE_CANNON.");
+			int delta;
+			if (SAME_RANK(sqSrc, sqDst)) {
+				delta = (sqDst < sqSrc ? -1 : 1);
+			} else if (SAME_FILE(sqSrc, sqDst)) {
+				delta = (sqDst < sqSrc ? -16 : 16);
+			} else {
+				return false;
+			}
+			sqPin = sqSrc + delta;
+			while (sqPin != sqDst && squares[sqPin] == 0) {
+				sqPin += delta;
+			}
+			if (sqPin == sqDst) {
+				return pcDst == 0 || pcSrc - pcSelfSide == PIECE_ROOK;
+			} else if (pcDst > 0 && pcSrc - pcSelfSide == PIECE_CANNON) {
+				sqPin += delta;
+				while (sqPin != sqDst && squares[sqPin] == 0) {
+					sqPin += delta;
+				}
+				return sqPin == sqDst;
+			} else {
+				return false;
+			}
+		case PIECE_PAWN:
+                    System.out.println("CheckMove: PIECE_PAWN.");
+			if (AWAY_HALF(sqDst, sdPlayer) && (sqDst == sqSrc - 1 || sqDst == sqSrc + 1)) {
+				return true;
+			}
+			return sqDst == SQUARE_FORWARD(sqSrc, sdPlayer);
+		default:
+                    System.out.println("CheckMove: Cannot regconize.");
+			return false;
+		}
+	}
 
 	public boolean checked() {
 		int pcSelfSide = SIDE_TAG(sdPlayer);

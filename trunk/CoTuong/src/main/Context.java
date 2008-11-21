@@ -82,7 +82,8 @@ public class Context //        implements Runnable
     public Network mNetwork;
     public long mLastSendStillOnline;
     public long mLastReceivedGoodConnect;
-    public final static long STILL_ONLINE_CYCLE = 10000;
+    public final static long STILL_ONLINE_CYCLE_MAX = 60000;
+    public final static long STILL_ONLINE_CYCLE_MIN = 10000;
     public final static long MAXIMUM_LOST_CONNECTION_PERIOD = 120000;
     public boolean mIsLoading = false;
     public MainCanvas mCanvas;
@@ -364,12 +365,12 @@ public class Context //        implements Runnable
             return;
         }
         try {
-            long now = System.currentTimeMillis();
+            long now = System.currentTimeMillis();            
 
             if (mIsLoggedIn) {
                 if (now - mLastReceivedGoodConnect > MAXIMUM_LOST_CONNECTION_PERIOD) {
                     fireEvent(new Event(Network.EVENT_LOSE_CONNECTION, null));
-                } else if (now - mLastSendStillOnline > STILL_ONLINE_CYCLE) {
+                } else if (now - mLastSendStillOnline > STILL_ONLINE_CYCLE_MIN) {
                     ByteArrayOutputStream aByteArray = new ByteArrayOutputStream();
                     ChessDataOutputStream aOut = new ChessDataOutputStream(aByteArray);
 //                    aOut.writeInt(mUserID);

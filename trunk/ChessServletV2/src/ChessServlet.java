@@ -90,7 +90,7 @@ public class ChessServlet
                 requestType = in.readShort();
             } catch (Exception e) {
                 //PunchLogger.logException("ADMIN: End of request queue.");
-                e.printStackTrace();
+                //e.printStackTrace();
                 requestType = -1;
             }
 
@@ -167,6 +167,7 @@ public class ChessServlet
                 {
                     PunchLogger.logException("ERROR: Lỗi xảy ra trong quá trình đăng ký tài khoản.");
                     PunchLogger.logException(e.toString());
+                    e.printStackTrace();
                     response.add(new String16("Lỗi: Máy chủ quá tải."));
                     response.packResponse(Protocol.RESPONSE_REGISTER_FAILURE, out);                    
                 }
@@ -218,6 +219,7 @@ public class ChessServlet
                 {
                     PunchLogger.logException("ERROR: Lỗi xảy ra trong quá trình đăng nhập tài khoản.");
                     PunchLogger.logException(e.toString());
+                    e.printStackTrace();
                     response.add(new String16("Lỗi: Máy chủ quá tải."));
                     response.packResponse(Protocol.RESPONSE_LOGIN_FAILURE, out);
                 }
@@ -258,6 +260,7 @@ public class ChessServlet
                 {
                     PunchLogger.logException("ERROR: Lỗi xảy ra trong quá trình đăng xuất tài khoản.");
                     PunchLogger.logException(e.toString());
+                    e.printStackTrace();
                     response.add(new String16("Lỗi: Máy chủ quá tải."));
                     response.packResponse(Protocol.RESPONSE_LOGOUT_FAILURE, out);
                 }
@@ -449,6 +452,7 @@ public class ChessServlet
                                         response.add(ysrc);
                                         response.add(xdst);
                                         response.add(ydst);
+                                        response.add(new String16(move_player_name));
                                         response.packResponse(Protocol.RESPONSE_NEW_MOVES, out);
                                     } 
                                     else // Đối thủ đã hết cờ
@@ -492,6 +496,7 @@ public class ChessServlet
                 {
                     PunchLogger.logException("ERROR: Lỗi xảy ra trong quá trình cập nhật phòng chơi.");
                     PunchLogger.logException(e.toString());
+                    e.printStackTrace();
                     response.add(new String16("Lỗi: Máy chủ quá tải."));
                     response.packResponse(Protocol.RESPONSE_UPDATE_MY_GAME_FAILURE, out);
                 }
@@ -629,6 +634,7 @@ public class ChessServlet
                 {
                     PunchLogger.logException("ERROR: Lỗi xảy ra trong quá trình giữ kết nối.");
                     PunchLogger.logException(e.toString());
+                    e.printStackTrace();
                     response.add(new String16("Lỗi: Máy chủ quá tải"));
                     response.packResponse(Protocol.RESPONSE_STILL_ONLINE_FAILURE, out);
                 }
@@ -706,6 +712,7 @@ public class ChessServlet
                 {
                     PunchLogger.logException("ERROR: Lỗi xảy ra trong quá trình thêm nước đi.");
                     PunchLogger.logException(e.toString());
+                    e.printStackTrace();
                     response.add(new String16("Lỗi: Máy chủ quá tải."));
                     response.packResponse(Protocol.RESPONSE_I_DID_A_MOVE_FAILURE, out);
                 }
@@ -785,6 +792,7 @@ public class ChessServlet
                 {
                     PunchLogger.logException("ERROR: Lỗi xảy ra trong quá trình gửi thách đấu.");
                     PunchLogger.logException(e.toString());
+                    e.printStackTrace();
                     response.add(new String16("Lỗi: Máy chủ quá tải."));
                     response.packResponse(Protocol.RESPONSE_SEND_CHALLENGE_FAILURE, out);
                 }
@@ -838,6 +846,7 @@ public class ChessServlet
                 {
                     PunchLogger.logException("ERROR: Lỗi xảy ra trong quá trình chấp nhận thách đấu.");
                     PunchLogger.logException(e.toString());
+                    e.printStackTrace();
                     response.add(new String16("Lỗi: Máy chủ quá tải."));
                     response.packResponse(Protocol.RESPONSE_ACCEPT_CHALLENGE_FAILURE, out);
                 }
@@ -876,6 +885,7 @@ public class ChessServlet
                 {
                     PunchLogger.logException("ERROR: Lỗi xảy ra trong quá trình từ chối thách đấu.");
                     PunchLogger.logException(e.toString());
+                    e.printStackTrace();
                     response.add(new String16("Lỗi: Máy chủ quá tải."));
                     response.packResponse(Protocol.RESPONSE_REJECT_CHALLENGE_FAILURE, out);
                 }
@@ -908,6 +918,7 @@ public class ChessServlet
                 {
                     PunchLogger.logException("ERROR: Lỗi xảy ra trong quá trình lấy danh sách top.");
                     PunchLogger.logException(e.toString());
+                    e.printStackTrace();
                     response.add(0);
                     response.packResponse(Protocol.RESPONSE_TOP_PLAYERS_LIST, out);                    
                 }
@@ -944,6 +955,7 @@ public class ChessServlet
                 {
                     PunchLogger.logException("ERROR: Lỗi xảy ra trong quá trình lấy danh sách bạn bè.");
                     PunchLogger.logException(e.toString());
+                    e.printStackTrace();
                     response.add(0);
                     response.packResponse(Protocol.RESPONSE_NEW_FRIENDS_LIST, out);
                 }
@@ -1006,6 +1018,7 @@ public class ChessServlet
                 {
                     PunchLogger.logException("ERROR: Lỗi xảy ra trong quá trình gửi thông báo hết cờ.");
                     PunchLogger.logException(e.toString());
+                    e.printStackTrace();
                     response.add(new String16("Lỗi: Máy chủ quá tải."));
                     response.packResponse(Protocol.RESPONSE_I_HAVE_NO_MOVE_FAILURE, out);
                 }
@@ -1031,6 +1044,7 @@ public class ChessServlet
                 {
                     PunchLogger.logException("ERROR: Lỗi xảy ra trong quá trình gửi thông điệp.");
                     PunchLogger.logException(e.toString());
+                    e.printStackTrace();
                     response.add(new String16("Lỗi: Máy chủ quá tải."));
                     response.packResponse(Protocol.RESPONSE_SEND_MESSAGE_FAILURE, out);
                 }
@@ -1102,6 +1116,7 @@ public class ChessServlet
                 {
                     PunchLogger.logException("ERROR: Lỗi xảy ra trong quá trình gửi kết bạn.");
                     PunchLogger.logException(e.toString());
+                    e.printStackTrace();
                     response.add(new String16("Lỗi: Máy chủ quá tải."));
                     response.packResponse(Protocol.RESPONSE_MAKE_FRIEND_FAILURE, out);
                 }
@@ -1138,6 +1153,7 @@ public class ChessServlet
                 {
                     PunchLogger.logException("ERROR: Lỗi xảy ra trong quá trình chấp thuận kết bạn.");
                     PunchLogger.logException(e.toString());
+                    e.printStackTrace();
                     response.add(new String16("Lỗi: Máy chủ quá tải."));
                     response.packResponse(Protocol.RESPONSE_ACCEPT_MAKE_FRIEND_FAILURE, out);
                 }
@@ -1165,6 +1181,7 @@ public class ChessServlet
                 {
                     PunchLogger.logException("ERROR: Lỗi xảy ra trong quá trình từ chối kết bạn.");
                     PunchLogger.logException(e.toString());
+                    e.printStackTrace();
                     response.add(new String16("Lỗi: Máy chủ quá tải."));
                     response.packResponse(Protocol.RESPONSE_REJECT_MAKE_FRIEND_SUCCESSFULLY, out);
                 }
@@ -1199,6 +1216,7 @@ public class ChessServlet
                 {
                     PunchLogger.logException("ERROR: Lỗi xảy ra trong quá trình yêu cầu hòa.");
                     PunchLogger.logException(e.toString());
+                    e.printStackTrace();
                     response.add(new String16("Lỗi: Máy chủ quá tải."));
                     response.packResponse(Protocol.RESPONSE_DRAW_GAME_FAILURE, out);
                 }
@@ -1237,6 +1255,7 @@ public class ChessServlet
                 {
                     PunchLogger.logException("ERROR: Lỗi xảy ra trong quá trình chấp nhận hòa.");
                     PunchLogger.logException(e.toString());
+                    e.printStackTrace();
                     response.add(new String16("Lỗi: Máy chủ quá tải."));
                     response.packResponse(Protocol.RESPONSE_I_AGREE_DRAW_GAME_FAILURE, out);
                 }
@@ -1271,6 +1290,7 @@ public class ChessServlet
                 {
                     PunchLogger.logException("ERROR: Lỗi xảy ra trong quá trình từ chối hòa.");
                     PunchLogger.logException(e.toString());
+                    e.printStackTrace();
                     response.add(new String16("Lỗi: Máy chủ quá tải."));
                     response.packResponse(Protocol.RESPONSE_I_DENY_DRAW_GAME_FAILURE, out);
                 }
