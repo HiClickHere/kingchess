@@ -249,7 +249,7 @@ public class ScreenLoading extends Screen {
                         }                        
                         System.gc();                        
                         mContext.mIsLoading = false;
-                        mContext.setScreen(new ScreenGamePlay(mContext));
+                        mContext.setScreen(new ScreenOnlineGamePlay(mContext));
                         break;
                 }                
                 break;           

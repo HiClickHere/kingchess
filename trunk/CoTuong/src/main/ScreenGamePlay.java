@@ -2,67 +2,58 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-
 package main;
 
-import core.ChessDataInputStream;
-import core.ChessDataOutputStream;
-import core.Event;
-import core.Network;
-import core.Protocol;
 import core.Screen;
-import core.String16;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.util.Vector;
 import javax.microedition.lcdui.Graphics;
 import javax.microedition.lcdui.Image;
-import javax.microedition.lcdui.TextField;
+import ui.ContextMenu;
 import ui.FastDialog;
-import util.ContextMenu;
 import util.Key;
-import ChessBoard.*;
+import xqwlight.Position;
+import xqwlight.Search;
 
 /**
  *
  * @author dong
  */
-public class ScreenGamePlay extends Screen {    
-    
-    public final static int PIECE_GENERAL = 0;
-    public final static int PIECE_GUARD = 1;
-    public final static int PIECE_ELEPHANT = 2;
-    public final static int PIECE_CAVALRY = 3;
-    public final static int PIECE_ROOK = 4;
-    public final static int PIECE_CANNON = 5;
-    public final static int PIECE_SOLDIER = 6;
-    
-    public final static int BOARD_WIDTH = 9;
-    public final static int BOARD_HEIGHT = 10;
-    
-    //public final static int BLACK_SHIFT = 10;
-    
-    //public int mBoard[][];
-    
-    public Image mBoardImage;
-    public Image mRedPieces[];
-    public Image mBlackPieces[];     
-    
-    public int mSelectedX;
-    public int mSelectedY;
-    public int mSelectingX;
-    public int mSelectingY;    
-    
+public class ScreenGamePlay extends Screen {
+
+    protected Position pos;// = new Position();
+    protected Search search; // = new Search(pos, 12);
+
+    protected String message;
+    protected int cursorX,  cursorY;
+    protected int sqSelected,  mvLast;
+    protected int handicap;
+    protected boolean flip;
+    protected Image imgPieces[];
+    protected Image imgSelected;
+    protected Image imgSelected2;
+    protected Image imgCursor;
+    protected Image imgCursor2;
+    protected static final int RESP_CLICK = 0;
+    protected static final int RESP_ILLEGAL = 1;
+    protected static final int RESP_MOVE = 2;
+    protected static final int RESP_MOVE2 = 3;
+    protected static final int RESP_CAPTURE = 4;
+    protected static final int RESP_CAPTURE2 = 5;
+    protected static final int RESP_CHECK = 6;
+    protected static final int RESP_CHECK2 = 7;
+    protected static final int RESP_WIN = 8;
+    protected static final int RESP_DRAW = 9;
+    protected static final int RESP_LOSS = 10;
+    protected int level = 0;
+    protected static final int PHASE_WAITING = 1;
+    protected static final int PHASE_THINKING = 2;
+    protected int phase;
+    protected boolean isEndGame;
     public boolean mIsOnlinePlay;
-    
     ContextMenu mContextMenu;
-    
     public boolean mIsDisplayMenu;
-    
     protected Vector mDialogVector;
     protected int mState;
-    
-    private Chessboard myChessBoard;
 
     public void addDialog(String aString, int leftSoft, int rightSoft, int state) {
         mDialogVector.addElement(new DialogRecord(aString, leftSoft, -1, rightSoft, state));
@@ -76,354 +67,101 @@ public class ScreenGamePlay extends Screen {
         mIsDisplayDialog = false;
         setSoftKey(-1, -1, -1);
     }
-    
     public final static int BUTTON_CONTINUE = 0;
     public final static int BUTTON_SEND_MESSAGE = 1;
     public final static int BUTTON_REQUEST_DRAW_GAME = 2;
     public final static int BUTTON_LEFT_GAME = 3;
     public final static int BUTTON_QUIT = 4;
 
-    public ScreenGamePlay(Context aContext)
-    {
+    public ScreenGamePlay(Context aContext) {
         super(aContext);
-        //mBoard = new int[BOARD_HEIGHT][BOARD_WIDTH];
-        myChessBoard = new Chessboard();
-        
-        mBoardImage = mContext.mBoardImage;
-        mRedPieces = mContext.mRedPieces;
-        mBlackPieces = mContext.mBlackPieces;
-        
-        mContextMenu = new ContextMenu(mContext.mTahomaFontGreen, mContext.mTahomaOutlineGreen);        
-        mContextMenu.setColors(0x5f7a7a, 0x708585);
-        mContextMenu.addItem(BUTTON_CONTINUE, "Tiếp tục", false,
-                            false,
-                            20,
-                            90,
-                            getWidth() >> 1,
-                            -1,
-                            Graphics.HCENTER | Graphics.VCENTER);
-        if (mContext.mIsOnlinePlay)
-        {
-            mContextMenu.addItem(BUTTON_SEND_MESSAGE, "Gửi tin nhắn", false,
-                                false,
-                                20,
-                                90,
-                                getWidth() >> 1,
-                                -1,
-                                Graphics.HCENTER | Graphics.VCENTER);
-            mContextMenu.addItem(BUTTON_REQUEST_DRAW_GAME, "Xin hòa", false, 
-                                false, 
-                                20, 
-                                90, 
-                                getWidth() >> 1, 
-                                -1, 
-                                Graphics.HCENTER | Graphics.VCENTER);
-        }
-        mContextMenu.addItem(BUTTON_LEFT_GAME, "Thoát ra", false,
-                            false,
-                            20,
-                            90,
-                            getWidth() >> 1,
-                            -1,
-                            Graphics.HCENTER | Graphics.VCENTER);
-        mIsOnlinePlay = mContext.mIsOnlinePlay;
-        mDialog = new FastDialog(getWidth() - 40, getHeight() - 80);
-    }
-    
-    public void resetBoard()
-    {
-        /*
-        for (int i = 0; i < BOARD_HEIGHT; i++)
-            for (int j = 0; j < BOARD_WIDTH; j++)
-                mBoard[i][j] = -1;
-        
-        mBoard[0][0] = BLACK_SHIFT + PIECE_ROOK;
-        mBoard[0][1] = BLACK_SHIFT + PIECE_CAVALRY;
-        mBoard[0][2] = BLACK_SHIFT + PIECE_ELEPHANT;
-        mBoard[0][3] = BLACK_SHIFT + PIECE_GUARD;
-        mBoard[0][4] = BLACK_SHIFT + PIECE_GENERAL;
-        mBoard[0][5] = BLACK_SHIFT + PIECE_GUARD;
-        mBoard[0][6] = BLACK_SHIFT + PIECE_ELEPHANT;
-        mBoard[0][7] = BLACK_SHIFT + PIECE_CAVALRY;
-        mBoard[0][8] = BLACK_SHIFT + PIECE_ROOK;
-        
-        mBoard[2][1] = BLACK_SHIFT + PIECE_CANNON;
-        mBoard[2][7] = BLACK_SHIFT + PIECE_CANNON;
-        
-        mBoard[3][0] = BLACK_SHIFT + PIECE_SOLDIER;
-        mBoard[3][2] = BLACK_SHIFT + PIECE_SOLDIER;
-        mBoard[3][4] = BLACK_SHIFT + PIECE_SOLDIER;
-        mBoard[3][6] = BLACK_SHIFT + PIECE_SOLDIER;
-        mBoard[3][8] = BLACK_SHIFT + PIECE_SOLDIER;
-        
-        mBoard[BOARD_HEIGHT - 1][0] = PIECE_ROOK;
-        mBoard[BOARD_HEIGHT - 1][1] = PIECE_CAVALRY;
-        mBoard[BOARD_HEIGHT - 1][2] = PIECE_ELEPHANT;
-        mBoard[BOARD_HEIGHT - 1][3] = PIECE_GUARD;
-        mBoard[BOARD_HEIGHT - 1][4] = PIECE_GENERAL;
-        mBoard[BOARD_HEIGHT - 1][5] = PIECE_GUARD;
-        mBoard[BOARD_HEIGHT - 1][6] = PIECE_ELEPHANT;
-        mBoard[BOARD_HEIGHT - 1][7] = PIECE_CAVALRY;
-        mBoard[BOARD_HEIGHT - 1][8] = PIECE_ROOK;
-        
-        mBoard[7][1] = PIECE_CANNON;
-        mBoard[7][7] = PIECE_CANNON;
-        
-        mBoard[6][0] = PIECE_SOLDIER;
-        mBoard[6][2] = PIECE_SOLDIER;
-        mBoard[6][4] = PIECE_SOLDIER;
-        mBoard[6][6] = PIECE_SOLDIER;
-        mBoard[6][8] = PIECE_SOLDIER;
-         */
-        myChessBoard.resetBoard();
-    }
-    
-    public void onActivate()
-    {
-        mDialogVector = new Vector();
-        mIsDisplayDialog = false;             
-        resetBoard();
-        mSelectingX = 0;
-        mSelectingY = 0;
-        mSelectedX = -1;
-        mSelectedY = -1;
-        mIsDisplayMenu = false;
-    }
-    
-    public void onDeactivate()
-    {
-    }
-    
-    protected long mLastUpdateTheGame;
-    public final static long GAME_UPDATE_CYCLE = 5000;
-    
-    public void onTick(long aMilliseconds)
-    {
-        //repaint();
-        //serviceRepaints();
-        if (mContext.mIsOnlinePlay)
-        {
-            //if (!mContext.mIsMyTurn)
-            {
-                if (System.currentTimeMillis() - mLastUpdateTheGame  > GAME_UPDATE_CYCLE)
-                {
-                    try {
-                        ByteArrayOutputStream aByteArray = new ByteArrayOutputStream();
-                        ChessDataOutputStream aOutput = new ChessDataOutputStream(aByteArray);
-                        aOutput.writeString16(new String16(mContext.mUsername));
-                        //aOutput.writeString16(new String16(mContext.mOpponentName));
-                        mContext.mNetwork.sendMessage(Protocol.REQUEST_UPDATE_MY_GAME, aByteArray.toByteArray());                        
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                    mLastUpdateTheGame = System.currentTimeMillis();                  
-                }                    
-            }
-            
-            if (!mDialogVector.isEmpty() && !mIsDisplayDialog) 
-            {
-                DialogRecord aDialog = (DialogRecord) mDialogVector.elementAt(0);
-                mDialogVector.removeElementAt(0);
-                mDialog.setText(aDialog.mMessage);
-                setSoftKey(aDialog.mLeftSoftkey, -1, aDialog.mRightSoftkey);
-                mState = aDialog.mState;
-                mIsDisplayDialog = true;
-            }
-        }
-    }
-    
-    public final static int STATE_LOSE_CONNECTION = 1;
-    public final static int STATE_MOVE_FAIL = 2;
-    public final static int STATE_ASK_FOR_DRAW_GAME = 3;
-    public final static int STATE_ASK_FOR_LEAVE_GAME = 4;
-    public final static int STATE_END_THE_GAME = 5;
-    public final static int STATE_MESSAGE = 6;
-    public final static int STATE_DRAW_REQUEST = 7;    
-    
-    public boolean onEvent(Event event) {
-        switch (event.mType) {
-            
-            case Network.EVENT_NETWORK_FAILURE:
-                return true;
 
-            case Network.EVENT_END_COMMUNICATION:
-                ByteArrayInputStream aByteArray = new ByteArrayInputStream(event.mData);
-                ChessDataInputStream in = new ChessDataInputStream(aByteArray);
-                try {
-                    while (in.available() > 0) {
-                        short returnType = in.readShort();
-                        int size = in.readInt();
-                        switch (returnType)
-                        {
-                            case Protocol.RESPONSE_NEW_MOVES:
-                                int xsrc = in.readInt();
-                                int ysrc = in.readInt();
-                                int xdst = in.readInt();
-                                int ydst = in.readInt();
-                                if (!mContext.mIsMyTurn)
-                                {
-                                    doMove(xsrc, ysrc, xdst, ydst);
-                                    mContext.mIsMyTurn = true;
-                                }
-                                break;
-                            
-                            case Protocol.RESPONSE_PLEASE_DO_A_MOVE:
-                                break;
-                            
-                            case Protocol.RESPONSE_I_DID_A_MOVE_SUCCESSFULLY:
-                                mContext.mIsMyTurn = false;
-                                break;
-                            
-                            case Protocol.RESPONSE_I_DID_A_MOVE_FAILURE:
-                                //removeAllDialog();
-                                //dismissDialog();
-                                addDialog("Lỗi: Xin bạn vui lòng thực hiện lại nước đi.",
-                                        -1,
-                                        SOFTKEY_OK,
-                                        STATE_MOVE_FAIL);
-                                mContext.mIsMyTurn = true;
-                                break;
-                            
-                            case Protocol.RESPONSE_YOU_WIN_THE_GAME:
-                                //removeAllDialog();
-                                //dismissDialog();
-                                addDialog("Chúc mừng! Đối thủ đã hết cờ, bạn là người chiến thắng.",
-                                        -1,
-                                        SOFTKEY_OK,
-                                        STATE_END_THE_GAME);  
-                                mContextMenu = null;
-                                mContextMenu = new ContextMenu(mContext.mTahomaFontGreen, mContext.mTahomaOutlineGreen);        
-                                mContextMenu.setColors(0x5f7a7a, 0x708585);
-                                mContextMenu.addItem(BUTTON_CONTINUE, "Tiếp tục", false,
-                                    false,
-                                    20,
-                                    90,
-                                    getWidth() >> 1,
-                                    -1,
-                                    Graphics.HCENTER | Graphics.VCENTER);
-                                mContextMenu.addItem(BUTTON_QUIT, "Thoát ra", false,
-                                    false,
-                                    20,
-                                    90,
-                                    getWidth() >> 1,
-                                    -1,
-                                    Graphics.HCENTER | Graphics.VCENTER);
-                                mContext.mMatchResult = Context.RESULT_WIN;
-                                break;
-                            
-                            case Protocol.RESPONSE_NEW_MESSAGES:              
-                                int numberOfMessage = in.readInt();
-                                for (int i = 0; i < numberOfMessage; i++)
-                                {
-                                    addDialog("Tin nhắn từ " + in.readString16().toJavaString() + " : " + in.readString16().toJavaString(), -1, SOFTKEY_OK, STATE_MESSAGE);
-                                }
-                                break;
-                            
-                            case Protocol.RESPONSE_I_HAVE_NO_MOVE_SUCCESSFULLY:
-                                //removeAllDialog();
-                                //dismissDialog();
-                                addDialog("Bạn đã thua...",
-                                        -1,
-                                        SOFTKEY_OK,
-                                        STATE_END_THE_GAME);                
-                                mContextMenu = null;
-                                mContextMenu = new ContextMenu(mContext.mTahomaFontGreen, mContext.mTahomaOutlineGreen);        
-                                mContextMenu.setColors(0x5f7a7a, 0x708585);
-                                mContextMenu.addItem(BUTTON_CONTINUE, "Tiếp tục", false,
-                                    false,
-                                    20,
-                                    90,
-                                    getWidth() >> 1,
-                                    -1,
-                                    Graphics.HCENTER | Graphics.VCENTER);
-                                mContextMenu.addItem(BUTTON_QUIT, "Thoát ra", false,
-                                    false,
-                                    20,
-                                    90,
-                                    getWidth() >> 1,
-                                    -1,
-                                    Graphics.HCENTER | Graphics.VCENTER);
-                                mContext.mMatchResult = Context.RESULT_LOSE;                                
-                                break;         
-                            
-                            case Protocol.RESPONSE_REQUEST_DRAW_GAME:
-                                addDialog("Đối thủ của bạn muốn thỏa thuận hòa ván này. Bạn có đồng ý không?", 
-                                        SOFTKEY_CANCEL, SOFTKEY_OK, STATE_DRAW_REQUEST);
-                                break;
-                                
-                            case Protocol.RESPONSE_THIS_IS_DRAW_GAME:
-                                addDialog("Kết thúc. Ván cờ hòa.",
-                                        -1,
-                                        SOFTKEY_OK,
-                                        STATE_END_THE_GAME);                
-                                mContextMenu = null;
-                                mContextMenu = new ContextMenu(mContext.mTahomaFontGreen, mContext.mTahomaOutlineGreen);        
-                                mContextMenu.setColors(0x5f7a7a, 0x708585);
-                                mContextMenu.addItem(BUTTON_CONTINUE, "Tiếp tục", false,
-                                    false,
-                                    20,
-                                    90,
-                                    getWidth() >> 1,
-                                    -1,
-                                    Graphics.HCENTER | Graphics.VCENTER);
-                                mContextMenu.addItem(BUTTON_QUIT, "Thoát ra", false,
-                                    false,
-                                    20,
-                                    90,
-                                    getWidth() >> 1,
-                                    -1,
-                                    Graphics.HCENTER | Graphics.VCENTER);
-                                mContext.mMatchResult = Context.RESULT_LOSE;    
-                                break;
-                                
-                            default:
-                                in.skip(size);
-                                break;
-                        }                        
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                return true;
-            case Network.EVENT_RECEIVING:
-            case Network.EVENT_SENDING:
-                return true;
-            case Network.EVENT_SETUP_CONNECTION:
-                return true;
-            case Network.EVENT_LOSE_CONNECTION:                                
-                mContext.mIsLoggedIn = false;
-                removeAllDialog();
-                dismissDialog();
-                mContext.mIsLoggedIn = false;
-                mContext.mOpponentName = "";
-                addDialog("Lỗi: Mất liên lạc với máy chủ.",
-                        -1,
-                        SOFTKEY_OK,
-                        STATE_LOSE_CONNECTION);
-                return true;
-            case Network.EVENT_TEXTBOX_FOCUS:
-                return true;
-            case Network.EVENT_TEXTBOX_INFOCUS:
-                try {
-                    ByteArrayOutputStream aByteOutputArray = new ByteArrayOutputStream();
-                    ChessDataOutputStream aOutput = new ChessDataOutputStream(aByteOutputArray);
-                    aOutput.writeString16(new String16(mContext.mUsername));
-                    aOutput.writeString16(new String16(mContext.mOpponentName));
-                    aOutput.writeString16(new String16(mContext.mInputScreen.mTextBox.getString()));
-                    mContext.mNetwork.sendMessage(Protocol.REQUEST_SEND_MESSAGE, aByteOutputArray.toByteArray());                        
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                mIsDisplayMenu = false;
-                return true;
+        try {
+            imgSelected = Image.createImage("/res/img/game/selected.png");
+            imgSelected2 = Image.createImage("/res/img/game/selected2.png");
+            imgCursor = Image.createImage("/res/img/game/cursor.png");
+            imgCursor2 = Image.createImage("/res/img/game/cursor2.png");
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-        return false;
+
+
+        //mIsOnlinePlay = mContext.mIsOnlinePlay;
+        mDialog = new FastDialog(getWidth() - 40, getHeight() - 80);
+
+        mDialogVector = new Vector();
+
+        resetGame(); // reset for new game
+
     }
-    
-    public boolean mIsIndicatorUp;
-    
-    public void paint(Graphics g)
-    {        
+
+    public void resetGame() {
+        // reset for new game
+        isEndGame = false;
+        //message = "Chúc mừng! Bạn đã thắng.";// : "Bạn đã thua...";
+        pos = new Position();
+        search = new Search(pos, 12);
+    }
+
+    public void onActivate() {
+        cursorX = cursorY = 7;
+        sqSelected = mvLast = 0;
+        handicap = 0; // không chấp
+
+        level = mContext.mOfflineLevel; // độ khó dễ
+
+        flip = (mContext.mOfflineColor == 0) ? false : true; //không lật bàn cờ, human đi quân đỏ
+
+        pos.fromFen(Position.STARTUP_FEN[handicap]);
+        if (flip) {
+            //pos.changeSide();
+        }
+        pos.setIrrev();
+
+        imgPieces = new Image[24];
+        for (int i = 0; i < 8; i++) {
+            imgPieces[i] = null;
+        }
+        imgPieces[8] = mContext.mRedPieces[ScreenOnlineGamePlay.PIECE_GENERAL];
+        imgPieces[9] = mContext.mRedPieces[ScreenOnlineGamePlay.PIECE_GUARD];
+        imgPieces[10] = mContext.mRedPieces[ScreenOnlineGamePlay.PIECE_ELEPHANT];
+        imgPieces[11] = mContext.mRedPieces[ScreenOnlineGamePlay.PIECE_CAVALRY];
+        imgPieces[12] = mContext.mRedPieces[ScreenOnlineGamePlay.PIECE_ROOK];
+        imgPieces[13] = mContext.mRedPieces[ScreenOnlineGamePlay.PIECE_CANNON];
+        imgPieces[14] = mContext.mRedPieces[ScreenOnlineGamePlay.PIECE_SOLDIER];
+        imgPieces[15] = null;
+
+        imgPieces[16] = mContext.mBlackPieces[ScreenOnlineGamePlay.PIECE_GENERAL];
+        imgPieces[17] = mContext.mBlackPieces[ScreenOnlineGamePlay.PIECE_GUARD];
+        imgPieces[18] = mContext.mBlackPieces[ScreenOnlineGamePlay.PIECE_ELEPHANT];
+        imgPieces[19] = mContext.mBlackPieces[ScreenOnlineGamePlay.PIECE_CAVALRY];
+        imgPieces[20] = mContext.mBlackPieces[ScreenOnlineGamePlay.PIECE_ROOK];
+        imgPieces[21] = mContext.mBlackPieces[ScreenOnlineGamePlay.PIECE_CANNON];
+        imgPieces[22] = mContext.mBlackPieces[ScreenOnlineGamePlay.PIECE_SOLDIER];
+        imgPieces[23] = null;
+
+//        if (flip)
+//        {
+//            responseMove();
+//        }
+    }
+
+    public void onTick(long aMilliseconds) {        
+        if (!mDialogVector.isEmpty() && !mIsDisplayDialog) {            
+            DialogRecord aDialog = (DialogRecord) mDialogVector.elementAt(0);
+            mDialogVector.removeElementAt(0);
+            mDialog.setText(aDialog.mMessage);
+            setSoftKey(aDialog.mLeftSoftkey, -1, aDialog.mRightSoftkey);
+            mState = aDialog.mState;
+            mIsDisplayDialog = true;
+        }
+    }
+    private int left;
+    private int top;
+    private int squareSize;
+
+    public void paint(Graphics g) {
+        //System.out.println("paint");
         g.setColor(0x708585);
         g.fillRect(0, 0, getWidth(), getHeight());
         int x = (getWidth() - mContext.mBoardImage.getWidth()) >> 1;
@@ -431,320 +169,156 @@ public class ScreenGamePlay extends Screen {
         g.drawImage(mContext.mBoardImage, x, y, Graphics.LEFT | Graphics.TOP);
         x += 1;
         y += 1;
-        
-        if (mIsDisplayDialog)
-        {
+
+        left = x;
+        top = y;
+        squareSize = 19;
+
+        if (mIsDisplayDialog) {
             mDialog.paint(g);
             drawSoftkey(g);
             return;
         }
-        
-        for (int i = 0; i < BOARD_HEIGHT; i++)
-            for (int j = 0; j < BOARD_WIDTH; j++)
-            {
-                Piece tmp = myChessBoard.getPieceAt(j, i);
-                if (tmp != null) {
-                    int imgIdx = 0;
-                    switch (tmp.getType()) {
-                        case ChessConst.PIECE_PAWN:     imgIdx = 6; break;
-                        case ChessConst.PIECE_CANNON:   imgIdx = 5; break;
-                        case ChessConst.PIECE_ROOK:     imgIdx = 4; break; 
-                        case ChessConst.PIECE_CAVALRY:  imgIdx = 3; break; 
-                        case ChessConst.PIECE_ELEPHANT: imgIdx = 2; break;
-                        case ChessConst.PIECE_BISHOP:   imgIdx = 1; break;
-                        case ChessConst.PIECE_GENERAL:  imgIdx = 0; break;
-                    }
-                    if (j != mSelectedX || i != mSelectedY || mIsIndicatorUp) {
-                        if (tmp.getColor()) 
-                            g.drawImage(mRedPieces[imgIdx], x + j * 19, y + i * 19, Graphics.HCENTER | Graphics.VCENTER); // red
-                        else g.drawImage(mBlackPieces[imgIdx], x + j * 19, y + i * 19, Graphics.HCENTER | Graphics.VCENTER); // black
-                    }
-                }
-                // Arrow
-                if (i == mSelectingY && j == mSelectingX)
-                {
-                    g.drawImage(mContext.mArrowDown, 
-                            x + j * 19, 
-                            y + i * 19 - (mIsIndicatorUp ? 2 : 0), Graphics.HCENTER | Graphics.VCENTER);
-                    mIsIndicatorUp = !mIsIndicatorUp;
+
+        for (int sq = 0; sq < 256; sq++) {
+            if (Position.IN_BOARD(sq)) {
+                int pc = pos.squares[sq];
+                if (pc > 0) {
+                    drawSquare(g, imgPieces[pc], sq);
                 }
             }
-        if (mIsDisplayMenu)
-        {
+        }
+
+        int sqSrc = 0;
+        int sqDst = 0;
+
+        if (mvLast > 0) {
+            sqSrc = Position.SRC(mvLast);
+            sqDst = Position.DST(mvLast);
+            drawSquare(g, (pos.squares[sqSrc] & 8) == 0 ? imgSelected : imgSelected2, sqSrc);
+            drawSquare(g, (pos.squares[sqDst] & 8) == 0 ? imgSelected : imgSelected2, sqDst);
+        } else if (sqSelected > 0) {
+            drawSquare(g, (pos.squares[sqSelected] & 8) == 0 ? imgSelected : imgSelected2, sqSelected);
+        }
+
+        int sq = Position.COORD_XY(cursorX + Position.FILE_LEFT, cursorY + Position.RANK_TOP);
+        if (flip) {
+            sq = Position.SQUARE_FLIP(sq);
+        }
+        if (sq == sqSrc || sq == sqDst || sq == sqSelected) {
+            //System.out.println("draw Cursor 1");
+            drawSquare(g, (pos.squares[sq] & 8) == 0 ? imgCursor2 : imgCursor, sq);
+        } else {
+            //System.out.println("draw Cursor 2");
+            drawSquare(g, (pos.squares[sq] & 8) == 0 ? imgCursor : imgCursor2, sq);
+        }
+
+        if (mIsDisplayMenu) {
             mContextMenu.paint(g, getWidth(), getHeight(), Graphics.RIGHT | Graphics.BOTTOM);
-        }                
+        }
     }
-    
-    public void doMove(int srcX, int srcY, int dstX, int dstY)
-    {   
-        if (!mContext.mIsMyTurn) {
-            // opponent move, switch to upper
-            
+
+    private void drawSquare(Graphics g, Image image, int sq) {
+        int sqFlipped = (flip ? Position.SQUARE_FLIP(sq) : sq);
+        int sqX = left + (Position.FILE_X(sqFlipped) - Position.FILE_LEFT) * squareSize;
+        int sqY = top + (Position.RANK_Y(sqFlipped) - Position.RANK_TOP) * squareSize;
+        g.drawImage(image, sqX, sqY, Graphics.HCENTER | Graphics.VCENTER);
+    }
+
+    public void keyPressed(int keyCode) {
+    }
+
+    protected void clickSquare() {
+        int sq = Position.COORD_XY(cursorX + Position.FILE_LEFT, cursorY + Position.RANK_TOP);
+        if (flip) {
+            sq = Position.SQUARE_FLIP(sq);
         }
-        
-        if (myChessBoard.tryMove(srcX, srcY, dstX, dstY)) {
-            
-            if (mContext.mIsMyTurn && mContext.mIsOnlinePlay)
-            {                
-                try {
-                    ByteArrayOutputStream aByteArray = new ByteArrayOutputStream();
-                    ChessDataOutputStream aOutput = new ChessDataOutputStream(aByteArray);
-                    aOutput.writeString16(new String16(mContext.mUsername));
-                    aOutput.writeString16(new String16(mContext.mOpponentName));
-                    aOutput.writeInt(srcX);
-                    aOutput.writeInt(srcY);
-                    aOutput.writeInt(dstX);
-                    aOutput.writeInt(dstY);
-                    mContext.mNetwork.sendMessage(Protocol.REQUEST_I_DID_A_MOVE, aByteArray.toByteArray());
-                    mContext.mIsMyTurn = false;
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }            
-            } else
-            {
-                if (myChessBoard.isEnd())
-                {
-                    try {
-                        ByteArrayOutputStream aByteArray = new ByteArrayOutputStream();
-                        ChessDataOutputStream aOutput = new ChessDataOutputStream(aByteArray);
-                        aOutput.writeString16(new String16(mContext.mUsername));
-                        aOutput.writeString16(new String16(mContext.mOpponentName));
-                        mContext.mNetwork.sendMessage(Protocol.REQUEST_I_HAVE_NO_MOVE, aByteArray.toByteArray());     
-                    } catch (Exception e)
-                    {
-                        e.printStackTrace();
-                    }
-                }
-            }
-        }
-        else {
-            // wrong move
-            if (!mContext.mIsMyTurn) {
-                // opponent move wrong, send respose
+        int pc = pos.squares[sq];
+        if ((pc & Position.SIDE_TAG(pos.sdPlayer)) != 0) {
+            //midlet.playSound(RESP_CLICK);
+            mvLast = 0;
+            sqSelected = sq;
+        } else {
+            if (sqSelected > 0 && addMove(Position.MOVE(sqSelected, sq)) && !responseMove()) {
+                //midlet.rsData[0] = 0;
+                //phase = PHASE_EXITTING;
             }
         }
     }
-    
-    public void keyPressed(int keyCode)
-    {
-        if (mIsDisplayDialog)
-        {
-            switch (keyCode)
-            {
-                case Key.UP:                    
-                case Key.DOWN:
-                    mDialog.onKeyPressed(keyCode);
-                    break;
-                case Key.SOFT_LEFT:
-                    switch (mState)
-                    {
-                        case STATE_ASK_FOR_LEAVE_GAME:
-                            if (mLeftSoftkey == SOFTKEY_CANCEL)
-                                dismissDialog();
-                            break;
-                        case STATE_ASK_FOR_DRAW_GAME:
-                            if (mLeftSoftkey == SOFTKEY_CANCEL)
-                                dismissDialog();
-                            break; 
-                        case STATE_DRAW_REQUEST:
-                            if (mLeftSoftkey == SOFTKEY_CANCEL) {
-                                dismissDialog();
-                                try {
-                                    ByteArrayOutputStream aByteArray = new ByteArrayOutputStream();
-                                    ChessDataOutputStream aOutput = new ChessDataOutputStream(aByteArray);
-                                    aOutput.writeString16(new String16(mContext.mUsername));
-                                    aOutput.writeString16(new String16(mContext.mOpponentName));
-                                    mContext.mNetwork.sendMessage(Protocol.REQUEST_I_DENY_DRAW_GAME, aByteArray.toByteArray());
-                                } catch (Exception e)
-                                {
-                                    e.printStackTrace();
-                                }
-                            }                                            
-                            break;
-                    }
-                    break;
-                case Key.SELECT:
-                case Key.SOFT_RIGHT:
-                    switch (mState)
-                    {
-                        case STATE_LOSE_CONNECTION:
-                            if (mRightSoftkey == SOFTKEY_OK) {
-                                dismissDialog();
-                                ScreenMainMenu aMainMenu = new ScreenMainMenu(mContext);
-                                aMainMenu.setMenu(ScreenMainMenu.MENU_MAIN);
-                                mContext.setScreen(aMainMenu);
-                            }
-                            break;
-                        case STATE_MOVE_FAIL:
-                            if (mRightSoftkey == SOFTKEY_OK) {
-                                dismissDialog();                                
-                            }
-                            break;
-                        case STATE_ASK_FOR_DRAW_GAME:
-                            if (mRightSoftkey == SOFTKEY_OK)
-                            {                                
-                                try {
-                                    ByteArrayOutputStream aByteArray = new ByteArrayOutputStream();
-                                    ChessDataOutputStream aOutput = new ChessDataOutputStream(aByteArray);
-                                    aOutput.writeString16(new String16(mContext.mUsername));
-                                    aOutput.writeString16(new String16(mContext.mOpponentName));
-                                    mContext.mNetwork.sendMessage(Protocol.REQUEST_DRAW_GAME, aByteArray.toByteArray());                        
-                                } catch (Exception e) {
-                                    e.printStackTrace();
-                                }
-                                dismissDialog();
-                            }
-                            break;
-                        case STATE_ASK_FOR_LEAVE_GAME:
-                            if (mRightSoftkey == SOFTKEY_OK)
-                            {
-                                ScreenOnlinePlay screenOnline = new ScreenOnlinePlay(mContext);
-                                mContext.setScreen(screenOnline);
-                            }
-                            break;
-                        
-                        case STATE_END_THE_GAME:                        
-                        case STATE_MESSAGE:
-                            if (mRightSoftkey == SOFTKEY_OK)
-                            {
-                                dismissDialog();
-                            }
-                            break;    
-                        
-                        
-                       case STATE_DRAW_REQUEST:
-                            if (mRightSoftkey == SOFTKEY_OK) {
-                                dismissDialog();
-                                try {
-                                    ByteArrayOutputStream aByteArray = new ByteArrayOutputStream();
-                                    ChessDataOutputStream aOutput = new ChessDataOutputStream(aByteArray);
-                                    aOutput.writeString16(new String16(mContext.mUsername));
-                                    aOutput.writeString16(new String16(mContext.mOpponentName));
-                                    mContext.mNetwork.sendMessage(Protocol.REQUEST_I_AGREE_DRAW_GAME, aByteArray.toByteArray());
-                                } catch (Exception e)
-                                {
-                                    e.printStackTrace();
-                                }
-                            }                                            
-                            break; 
-                    }
-                    break;
-            }
+
+    /** Player Move Result */
+    protected boolean getResult() {
+        return getResult(-1);
+    }
+
+    /** Computer Move Result */
+    protected boolean getResult(int response) {
+        if (pos.isMate()) {
+            //midlet.playSound(response < 0 ? RESP_WIN : RESP_LOSS);
+            message = (response < 0 ? "Xin chúc mừng! Bạn đã thắng." : "Quân Tướng của bạn đã bị bắt. Bạn đã thua...");
+            isEndGame = true;
+            return true;
         }
-        else
-        {
-            if (!mIsDisplayMenu)
-            {
-                if (mContext.mIsMyTurn)
-                {
-                    switch (keyCode)
-                    {
-                        case Key.UP:      
-                            if (mSelectingY > 0)
-                                mSelectingY--;
-                            break;
-                        case Key.DOWN:
-                            if (mSelectingY < BOARD_HEIGHT - 1)
-                                mSelectingY++;
-                            break;
-                        case Key.LEFT:
-                            if (mSelectingX > 0)
-                                mSelectingX--;
-                            break;
-                        case Key.RIGHT:
-                            if (mSelectingX < BOARD_WIDTH - 1)
-                                mSelectingX++;
-                            break;
-                        case Key.SELECT:
-                            if (mSelectedX == -1)
-                            {
-                                mSelectedX = mSelectingX;
-                                mSelectedY = mSelectingY;
-                            }
-                            else
-                            {
-                                doMove(mSelectedX, mSelectedY, mSelectingX, mSelectingY);
-                                mSelectedX = -1;
-                                mSelectedY = -1;
-                            }
-                            break;
-                        case Key.SOFT_RIGHT:
-                            mIsDisplayMenu = true;
-                            break;
-                    }
-                }
-                else 
-                {
-                    switch (keyCode)
-                    {
-                        case Key.SOFT_RIGHT:
-                            mIsDisplayMenu = true;
-                            break;
-                    }
-                }
-            }
-            else
-            {
-                switch (keyCode)
-                {
-                    case Key.UP:      
-                        mContextMenu.onDirectionKeys(0);
-                        break;
-                    case Key.DOWN:
-                        mContextMenu.onDirectionKeys(1);
-                        break;
-                    case Key.LEFT:
-                        mIsDisplayMenu = false;
-                        break;
-                    case Key.RIGHT:
-                        mIsDisplayMenu = false;
-                        break;
-                    case Key.SELECT:
-                        switch (mContextMenu.selectedItem())
-                        {
-                            case BUTTON_CONTINUE:
-                                mIsDisplayMenu = false;
-                                break;
-                            case BUTTON_SEND_MESSAGE:
-                                mContext.mInputScreen.mTextBox.setConstraints(TextField.ANY);
-                                mContext.mInputScreen.mTextBox.setLabel("Tin nhan");
-                                mContext.mInputScreen.mTextBox.setString("");                                
-                                mContext.mInputScreen.mTextBox.setMaxSize(256);
-                                mContext.setDisplayTextBox();
-                                break;
-                            case BUTTON_REQUEST_DRAW_GAME:
-                                addDialog("Bạn muốn thỏa thuận hòa ván cờ này?",
-                                            SOFTKEY_CANCEL,
-                                            SOFTKEY_OK,
-                                            STATE_ASK_FOR_DRAW_GAME);
-                                break;
-                            case BUTTON_LEFT_GAME:
-                                if (!mContext.mIsOnlinePlay)
-                                {
-                                    addDialog("Bạn có muốn thoát không?",
-                                            SOFTKEY_CANCEL,
-                                            SOFTKEY_OK,
-                                            STATE_ASK_FOR_LEAVE_GAME);
-                                }
-                                else
-                                {
-                                    addDialog("Thoát khỏi ván chơi bạn sẽ bị xử thua. Bạn có muốn thoát không? ",
-                                            SOFTKEY_CANCEL,
-                                            SOFTKEY_OK,
-                                            STATE_ASK_FOR_LEAVE_GAME);
-                                }
-                                break;
-                            case BUTTON_QUIT:
-                                ScreenEndGame screenEnd = new ScreenEndGame(mContext);
-                                mContext.setScreen(screenEnd);
-                                break;
-                        }
-                        break;
-                    case Key.SOFT_RIGHT:
-                        mIsDisplayMenu = false;
-                        break;
-                }
-            }
+        int vlRep = pos.repStatus(3);
+        if (vlRep > 0) {
+            vlRep = (response < 0 ? pos.repValue(vlRep) : -pos.repValue(vlRep));
+//			midlet.playSound(vlRep > Position.WIN_VALUE ? RESP_LOSS :
+//					vlRep < -Position.WIN_VALUE ? RESP_WIN : RESP_DRAW);
+            message = (vlRep > Position.WIN_VALUE ? "Quân Tướng của bạn đã bị bắt. Bạn đã thua..." : vlRep < -Position.WIN_VALUE ? "Xin chúc mừng! Bạn đã thắng." : "Ván cờ này nên kết thúc ở kết quả hòa.");
+            isEndGame = true;
+            return true;
         }
+        if (pos.moveNum > 100) {
+            //midlet.playSound(RESP_DRAW);
+            message = "Ván cờ đã vượt quá số nước đi quy định mà không phân định được thắng thua. Ván cờ kết thúc hòa.";
+            isEndGame = true;
+            return true;
+        }
+        if (response >= 0) {
+            //midlet.playSound(response);
+            // Backup Retract Status
+            //System.arraycopy(midlet.rsData, 0, retractData, 0, XQWLMIDlet.RS_DATA_LEN);
+            // Backup Record-Score Data
+            //midlet.rsData[0] = 1;
+            //System.arraycopy(pos.squares, 0, midlet.rsData, 256, 256);
+        }
+        return false;
+    }
+
+    protected boolean addMove(int mv) {
+        if (pos.legalMove(mv)) {
+            if (pos.makeMove(mv)) {
+//				midlet.playSound(pos.inCheck() ? RESP_CHECK :
+//						pos.captured() ? RESP_CAPTURE : RESP_MOVE);
+                if (pos.captured()) {
+                    pos.setIrrev();
+                }
+                sqSelected = 0;
+                mvLast = mv;
+                return true;
+            }
+//			midlet.playSound(RESP_ILLEGAL);
+        }
+        return false;
+    }
+
+    protected boolean responseMove() {
+        if (getResult()) {
+            return false;
+        }
+        phase = PHASE_THINKING;
+        mContext.mCanvas.repaint();
+        mContext.mCanvas.serviceRepaints();
+        mvLast = search.searchMain(1000 << (level << 1));
+        pos.makeMove(mvLast);
+        int response = pos.inCheck() ? RESP_CHECK2 : pos.captured() ? RESP_CAPTURE2 : RESP_MOVE2;
+        if (pos.captured()) {
+            pos.setIrrev();
+        }
+        phase = PHASE_WAITING;
+        mContext.mCanvas.repaint();
+        mContext.mCanvas.serviceRepaints();
+        boolean result = !getResult(response);
+        return result;
     }
 }
