@@ -75,6 +75,25 @@ public class ScreenOnlineGamePlay extends ScreenGamePlay {
     public void onActivate() {
         super.onActivate();
         isEndGame = false;
+        
+        if (mContext.mIsMyTurn && mContext.mIsAutoBot)
+        {
+            mvLast = search.searchMain(1000 << (level << 1));
+            pos.makeMove(mvLast);
+            int _src = Position.SRC(mvLast);            
+            int _dst = Position.DST(mvLast);
+            if (flip)
+            {
+                _src = Position.SQUARE_FLIP(_src);
+                _dst = Position.SQUARE_FLIP(_dst);            
+            }
+            int _srcX = ((_src & 0x0000000F) - Position.FILE_LEFT);
+            int _srcY = (((_src & 0x000000F0) >> 4) - Position.RANK_TOP);
+            int _dstX = ((_dst & 0x0000000F) - Position.FILE_LEFT);
+            int _dstY = (((_dst & 0x000000F0) >> 4) - Position.RANK_TOP);
+            System.out.println(_srcX + " " + _srcY + " " + _dstX + " " + _dstY);
+            doMove(_srcX, _srcY, _dstX, _dstY);
+        }
     }
 
     public void onDeactivate() {
@@ -137,8 +156,28 @@ public class ScreenOnlineGamePlay extends ScreenGamePlay {
                                     mOppYsrc = ysrc;
                                     mOppXdst = xdst;
                                     mOppYdst = ydst;
-                                    responseMove();
+                                    boolean legal = responseMove();
                                     mContext.mIsMyTurn = true;
+                                    
+                                    //Dong: added for bot
+                                    if (mContext.mIsAutoBot && legal)
+                                    {
+                                        mvLast = search.searchMain(1000 << (level << 1));
+                                        pos.makeMove(mvLast);
+                                        int _src = Position.SRC(mvLast);            
+                                        int _dst = Position.DST(mvLast);
+                                        if (flip)
+                                        {
+                                            _src = Position.SQUARE_FLIP(_src);
+                                            _dst = Position.SQUARE_FLIP(_dst);
+                                        }
+                                        int _srcX = ((_src & 0x0000000F) - Position.FILE_LEFT);
+                                        int _srcY = (((_src & 0x000000F0) >> 4) - Position.RANK_TOP);
+                                        int _dstX = ((_dst & 0x0000000F) - Position.FILE_LEFT);
+                                        int _dstY = (((_dst & 0x000000F0) >> 4) - Position.RANK_TOP);
+                                        System.out.println(_srcX + " " + _srcY + " " + _dstX + " " + _dstY);
+                                        doMove(_srcX, _srcY, _dstX, _dstY);
+                                    }                                    
                                 }
                                 break;
                             
@@ -167,35 +206,44 @@ public class ScreenOnlineGamePlay extends ScreenGamePlay {
                             case Protocol.RESPONSE_YOU_WIN_THE_GAME:                                
                                 //removeAllDialog();
                                 //dismissDialog();
-                                addDialog(in.readString16().toJavaString(),
-                                        -1,
-                                        SOFTKEY_OK,
-                                        STATE_END_THE_GAME);
-                                mContextMenu = null;
-                                mContextMenu = new ContextMenu(mContext.mTahomaFontGreen, mContext.mTahomaOutlineGreen);
-                                mContextMenu.setColors(0x5f7a7a, 0x708585);
-                                mContextMenu.addItem(BUTTON_CONTINUE, "Tiếp tục", false,
-                                        false,
-                                        20,
-                                        90,
-                                        getWidth() >> 1,
-                                        -1,
-                                        Graphics.HCENTER | Graphics.VCENTER);
-                                mContextMenu.addItem(BUTTON_QUIT, "Thoát ra", false,
-                                        false,
-                                        20,
-                                        90,
-                                        getWidth() >> 1,
-                                        -1,
-                                        Graphics.HCENTER | Graphics.VCENTER);
-                                mContext.mMatchResult = Context.RESULT_WIN;
-                                isEndGame = true;
+                                if (!mContext.mIsAutoBot)
+                                {
+                                    addDialog(in.readString16().toJavaString(),
+                                            -1,
+                                            SOFTKEY_OK,
+                                            STATE_END_THE_GAME);
+                                    mContextMenu = null;
+                                    mContextMenu = new ContextMenu(mContext.mTahomaFontGreen, mContext.mTahomaOutlineGreen);
+                                    mContextMenu.setColors(0x5f7a7a, 0x708585);
+                                    mContextMenu.addItem(BUTTON_CONTINUE, "Tiếp tục", false,
+                                            false,
+                                            20,
+                                            90,
+                                            getWidth() >> 1,
+                                            -1,
+                                            Graphics.HCENTER | Graphics.VCENTER);
+                                    mContextMenu.addItem(BUTTON_QUIT, "Thoát ra", false,
+                                            false,
+                                            20,
+                                            90,
+                                            getWidth() >> 1,
+                                            -1,
+                                            Graphics.HCENTER | Graphics.VCENTER);
+                                    mContext.mMatchResult = Context.RESULT_WIN;
+                                    isEndGame = true;
+                                }
+                                else
+                                {
+                                    ScreenOnlinePlay screenOnline = new ScreenOnlinePlay(mContext);
+                                    mContext.setScreen(screenOnline);
+                                }
                                 break;
 
-                            case Protocol.RESPONSE_NEW_MESSAGES:
+                            case Protocol.RESPONSE_NEW_MESSAGES:                                
                                 int numberOfMessage = in.readInt();
                                 for (int i = 0; i < numberOfMessage; i++) {
-                                    addDialog("Tin nhắn từ " + in.readString16().toJavaString() + ": " + in.readString16().toJavaString(), -1, SOFTKEY_OK, STATE_MESSAGE);
+                                    if (!mContext.mIsAutoBot)
+                                        addDialog("Tin nhắn từ " + in.readString16().toJavaString() + ": " + in.readString16().toJavaString(), -1, SOFTKEY_OK, STATE_MESSAGE);
                                 }
                                 break;
 
@@ -227,34 +275,57 @@ public class ScreenOnlineGamePlay extends ScreenGamePlay {
                                 break;
 
                             case Protocol.RESPONSE_REQUEST_DRAW_GAME:
-                                addDialog("Đối thủ của bạn muốn thỏa thuận hòa ván này. Bạn có đồng ý không?",
+                                if (!mContext.mIsAutoBot)
+                                {
+                                    addDialog("Đối thủ của bạn muốn thỏa thuận hòa ván này. Bạn có đồng ý không?",
                                         SOFTKEY_CANCEL, SOFTKEY_OK, STATE_DRAW_REQUEST);
+                                }
+                                else
+                                {
+                                    try {
+                                        ByteArrayOutputStream aByteArray2 = new ByteArrayOutputStream();
+                                        ChessDataOutputStream aOutput = new ChessDataOutputStream(aByteArray2);
+                                        aOutput.writeString16(new String16(mContext.mUsername));
+                                        aOutput.writeString16(new String16(mContext.mOpponentName));
+                                        mContext.mNetwork.sendMessage(Protocol.REQUEST_I_AGREE_DRAW_GAME, aByteArray2.toByteArray());
+                                    } catch (Exception e) {
+                                        e.printStackTrace();
+                                    }
+                                }
                                 break;
 
                             case Protocol.RESPONSE_THIS_IS_DRAW_GAME:                                
-                                addDialog("Kết thúc. Ván cờ hòa.",
-                                        -1,
-                                        SOFTKEY_OK,
-                                        STATE_END_THE_GAME);
-                                mContextMenu = null;
-                                mContextMenu = new ContextMenu(mContext.mTahomaFontGreen, mContext.mTahomaOutlineGreen);
-                                mContextMenu.setColors(0x5f7a7a, 0x708585);
-                                mContextMenu.addItem(BUTTON_CONTINUE, "Tiếp tục", false,
-                                        false,
-                                        20,
-                                        90,
-                                        getWidth() >> 1,
-                                        -1,
-                                        Graphics.HCENTER | Graphics.VCENTER);
-                                mContextMenu.addItem(BUTTON_QUIT, "Thoát ra", false,
-                                        false,
-                                        20,
-                                        90,
-                                        getWidth() >> 1,
-                                        -1,
-                                        Graphics.HCENTER | Graphics.VCENTER);
-                                mContext.mMatchResult = Context.RESULT_DRAW;
-                                isEndGame = true;
+                                if (!mContext.mIsAutoBot)
+                                {
+                                    addDialog("Kết thúc. Ván cờ hòa.",
+                                            -1,
+                                            SOFTKEY_OK,
+                                            STATE_END_THE_GAME);
+                                    mContextMenu = null;
+                                    mContextMenu = new ContextMenu(mContext.mTahomaFontGreen, mContext.mTahomaOutlineGreen);
+                                    mContextMenu.setColors(0x5f7a7a, 0x708585);
+                                    mContextMenu.addItem(BUTTON_CONTINUE, "Tiếp tục", false,
+                                            false,
+                                            20,
+                                            90,
+                                            getWidth() >> 1,
+                                            -1,
+                                            Graphics.HCENTER | Graphics.VCENTER);
+                                    mContextMenu.addItem(BUTTON_QUIT, "Thoát ra", false,
+                                            false,
+                                            20,
+                                            90,
+                                            getWidth() >> 1,
+                                            -1,
+                                            Graphics.HCENTER | Graphics.VCENTER);
+                                    mContext.mMatchResult = Context.RESULT_DRAW;
+                                    isEndGame = true;
+                                }
+                                else
+                                {
+                                    ScreenOnlinePlay screenOnline = new ScreenOnlinePlay(mContext);
+                                    mContext.setScreen(screenOnline);
+                                }
                                 break;                                                            
                                 
                             case Protocol.RESPONSE_USERINFO_SUCCESSFULLY:
@@ -452,8 +523,7 @@ public class ScreenOnlineGamePlay extends ScreenGamePlay {
                     e.printStackTrace();
                 }
             }            
-        }
-        
+        }                        
         return result;
     }
     
