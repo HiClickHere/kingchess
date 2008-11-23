@@ -49,6 +49,15 @@ public class ScreenMainMenu extends Screen {
     public void onActivate() {
         mIsDisplayDialog = false;
     }
+    
+    public final static int BUTTON_ONLINE_PLAY = 0;
+    public final static int BUTTON_OFFLINE_PLAY = 1;
+    public final static int BUTTON_OPTION = 2;
+    public final static int BUTTON_HELP = 3;
+    public final static int BUTTON_ABOUT = 4;
+    public final static int BUTTON_EXIT = 5;
+    public final static int BUTTON_SOUND = 6;
+    public final static int BUTTON_AUTO_BOT = 7;    
 
     public void setMenu(int menuType) {
         mMenu = null;
@@ -58,7 +67,7 @@ public class ScreenMainMenu extends Screen {
             case MENU_MAIN:
                 mMenu = new Menu();
                 mMenu.setColors(0x5f7a7a, 0x708585);
-                mMenu.addItem(0,
+                mMenu.addItem(BUTTON_ONLINE_PLAY,
                         "Chơi mạng",
                         false,
                         false,
@@ -67,7 +76,7 @@ public class ScreenMainMenu extends Screen {
                         getWidth() >> 1,
                         -1,
                         Graphics.HCENTER | Graphics.VCENTER);
-                mMenu.addItem(1, "Chơi đơn",
+                mMenu.addItem(BUTTON_OFFLINE_PLAY, "Chơi đơn",
                         false,
                         false,
                         20,
@@ -75,7 +84,7 @@ public class ScreenMainMenu extends Screen {
                         getWidth() >> 1,
                         -1,
                         Graphics.HCENTER | Graphics.VCENTER);
-                mMenu.addItem(2, StringConst.STR_OPTION,
+                mMenu.addItem(BUTTON_OPTION, StringConst.STR_OPTION,
                         false,
                         false,
                         20,
@@ -83,7 +92,7 @@ public class ScreenMainMenu extends Screen {
                         getWidth() >> 1,
                         -1,
                         Graphics.HCENTER | Graphics.VCENTER);
-                mMenu.addItem(3, StringConst.STR_HELP,
+                mMenu.addItem(BUTTON_HELP, StringConst.STR_HELP,
                         false,
                         false,
                         20,
@@ -91,14 +100,14 @@ public class ScreenMainMenu extends Screen {
                         getWidth() >> 1,
                         -1,
                         Graphics.HCENTER | Graphics.VCENTER);
-                mMenu.addItem(4, StringConst.STR_ABOUT, false,
+                mMenu.addItem(BUTTON_ABOUT, StringConst.STR_ABOUT, false,
                         false,
                         20,
                         90,
                         getWidth() >> 1,
                         -1,
                         Graphics.HCENTER | Graphics.VCENTER);
-                mMenu.addItem(5, StringConst.STR_EXIT, false,
+                mMenu.addItem(BUTTON_EXIT, StringConst.STR_EXIT, false,
                         false,
                         20,
                         90,
@@ -116,13 +125,36 @@ public class ScreenMainMenu extends Screen {
             case MENU_OPTION:
                 mMenu = new Menu();
                 mMenu.setColors(0x5f7a7a, 0x708585);
-                mMenu.addItem(0, StringConst.STR_SOUND_ON, false,
+                mMenu.addItem(BUTTON_SOUND, StringConst.STR_SOUND_ON, false,
                         false,
                         20,
                         90,
                         getWidth() >> 1,
                         -1,
                         Graphics.HCENTER | Graphics.VCENTER);
+                if (mContext.mCheatEnable)
+                {
+                    if (!mContext.mIsAutoBot)
+                    {
+                        mMenu.addItem(BUTTON_AUTO_BOT, "Tự động: TẮT", false,
+                                false,
+                                20,
+                                90,
+                                getWidth() >> 1,
+                                -1,
+                                Graphics.HCENTER | Graphics.VCENTER);
+                    }
+                    else
+                    {
+                        mMenu.addItem(BUTTON_AUTO_BOT, "Tự động: BẬT", false,
+                                false,
+                                20,
+                                90,
+                                getWidth() >> 1,
+                                -1,
+                                Graphics.HCENTER | Graphics.VCENTER);
+                    }
+                }
                 setSoftKey(SOFTKEY_BACK, -1, SOFTKEY_OK);
                 break;
             case MENU_HELP:
@@ -258,12 +290,12 @@ public class ScreenMainMenu extends Screen {
                     switch (mCurrentMenu) {
                         case MENU_MAIN:
                             switch (mMenu.selectedItem()) {
-                                case 0:
+                                case BUTTON_ONLINE_PLAY:
                                     //setMenu(MENU_ONLINE_PLAY);
                                     ScreenOnlinePlay aScreenOnlinePlay = new ScreenOnlinePlay(mContext);
                                     mContext.setScreen(aScreenOnlinePlay);
                                     break;
-                                case 1:
+                                case BUTTON_OFFLINE_PLAY:
                                     //setMenu(MENU_OFFLINE_PLAY);
 //                                    ScreenLoading aScreenLoading = new ScreenLoading(mContext);
 //                                    aScreenLoading.setLoadingScript(ScreenLoading.LOADING_SCRIPT_GAMEPLAY_OFFLINE);                                            
@@ -271,20 +303,34 @@ public class ScreenMainMenu extends Screen {
                                     ScreenOfflinePlay screenOffline = new ScreenOfflinePlay(mContext);
                                     mContext.setScreen(screenOffline);
                                     break;
-                                case 2:
+                                case BUTTON_OPTION:
                                     setMenu(MENU_OPTION);
                                     break;
-                                case 3:
+                                case BUTTON_HELP:
                                     setMenu(MENU_HELP);
                                     break;
-                                case 4:
+                                case BUTTON_ABOUT:
                                     setMenu(MENU_ABOUT);
                                     break;
-                                case 5:
+                                case BUTTON_EXIT:
                                     mIsDisplayDialog = true;
                                     mDialog.setText("Bạn có thực sự muốn thoát?");
                                     setSoftKey(SOFTKEY_CANCEL, -1, SOFTKEY_OK);
                                     //mContext.mMIDlet.notifyDestroyed();
+                                    break;
+                            }
+                            break;
+                        case MENU_OPTION:
+                            switch (mMenu.selectedItem())
+                            {
+                                case BUTTON_SOUND:
+                                    break;
+                                case BUTTON_AUTO_BOT:
+                                    mContext.mIsAutoBot = !mContext.mIsAutoBot;
+                                    if (mContext.mIsAutoBot)
+                                        mMenu.getItem(BUTTON_AUTO_BOT).mCaption = "Tự động: BẬT";
+                                    else
+                                        mMenu.getItem(BUTTON_AUTO_BOT).mCaption = "Tự động: TẮT";
                                     break;
                             }
                             break;

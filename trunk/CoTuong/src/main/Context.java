@@ -103,6 +103,9 @@ public class Context //        implements Runnable
     public int mHisWinCount;
     public int mHisLoseCount;
     public int mHisDrawCount;
+    
+    public boolean mIsAutoBot = false;
+    public boolean mCheatEnable = false;
 
     //public Vector mChallengerList;
     /** Creates a new instance of Context */
@@ -120,6 +123,8 @@ public class Context //        implements Runnable
         mLobbyList = new Vector();
         //http://dongnh.blogdns.net:3664/services/ChessServlet
         mURL = getProperty("Server-URL", "http://localhost:8282/ChessServletV2/ChessServlet");
+        String auto = getProperty("Cheat", "0");
+        mCheatEnable = auto.equals("1");
     }
 
     private String getProperty(String name, String defaultVal) {

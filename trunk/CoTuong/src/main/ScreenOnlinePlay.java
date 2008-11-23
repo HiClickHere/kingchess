@@ -226,10 +226,28 @@ public class ScreenOnlinePlay extends Screen {
                                 break;
                             case Protocol.RESPONSE_NEW_CHALLENGE:                                
                                 mContext.mOpponentName = in.readString16().toJavaString();
-                                addDialog("Cờ thủ " + mContext.mOpponentName + " thách đấu với bạn. " +
-                                    "Bạn có chấp nhận lời thách đấu không?",
-                                    SOFTKEY_CANCEL, SOFTKEY_OK,
-                                    STATE_ON_CHALLENGE);
+                                if (!mContext.mIsAutoBot)
+                                {
+                                    addDialog("Cờ thủ " + mContext.mOpponentName + " thách đấu với bạn. " +
+                                        "Bạn có chấp nhận lời thách đấu không?",
+                                        SOFTKEY_CANCEL, SOFTKEY_OK,
+                                        STATE_ON_CHALLENGE);
+                                }
+                                else
+                                {
+                                    try {
+                                        ByteArrayOutputStream aByteArray2 = new ByteArrayOutputStream();
+                                        ChessDataOutputStream aOutput = new ChessDataOutputStream(aByteArray2);
+                                        aOutput.writeString16(new String16(mContext.mUsername));
+                                        aOutput.writeString16(new String16(mContext.mOpponentName));
+                                        mContext.mNetwork.sendMessage(Protocol.REQUEST_ACCEPT_CHALLENGE, aByteArray2.toByteArray());
+                                        addDialog(StringConst.STR_CONNECTING_SERVER,
+                                                SOFTKEY_CANCEL, -1,
+                                                STATE_CONNECTING);
+                                    } catch (Exception e) {
+                                        e.printStackTrace();
+                                    }
+                                }
                                 break;
                             case Protocol.RESPONSE_ACCEPT_CHALLENGE_SUCCESSFULLY:                                
                                 mContext.mIsMyTurn = false;
