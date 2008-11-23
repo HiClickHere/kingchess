@@ -220,7 +220,7 @@ public class ScreenGamePlay extends Screen {
         }
     }
 
-    private void drawSquare(Graphics g, Image image, int sq) {
+    private void drawSquare(Graphics g, Image image, int sq) {                
         int sqFlipped = (flip ? Position.SQUARE_FLIP(sq) : sq);
         int sqX = left + (Position.FILE_X(sqFlipped) - Position.FILE_LEFT) * squareSize;
         int sqY = top + (Position.RANK_Y(sqFlipped) - Position.RANK_TOP) * squareSize;

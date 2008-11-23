@@ -18,6 +18,7 @@ import core.Screen;
 import core.String16;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.util.Vector;
 import javax.microedition.lcdui.Graphics;
 import javax.microedition.lcdui.TextField;
 import ui.FastDialog;
@@ -35,12 +36,28 @@ public class ScreenLogin extends Screen {
     private TextBox mFocusTextBox;
     private FastDialog mDialog = null;
     private boolean mIsDisplayDialog = false;
+    protected Vector mDialogVector;
+    protected int mState;
+    
+    public void addDialog(String aString, int leftSoft, int rightSoft, int state) {
+        mDialogVector.addElement(new DialogRecord(aString, leftSoft, -1, rightSoft, state));
+    }
+
+    public void removeAllDialog() {
+        mDialogVector.removeAllElements();
+    }
+
+    public void dismissDialog() {
+        mIsDisplayDialog = false;
+        setSoftKey(SOFTKEY_BACK, -1, SOFTKEY_OK);
+    }    
     
     /** Creates a new instance of ScreenLogin */
     public ScreenLogin(Context aContext) {
         super(aContext);
         mTextBoxes = new TextBox[2];
         mDialog = new FastDialog(getWidth() - 40, getHeight() - 80);
+        mDialogVector = new Vector();
     }        
 
     public void onActivate() {
@@ -92,11 +109,9 @@ public class ScreenLogin extends Screen {
         switch (event.mType)
         {
             case Network.EVENT_NETWORK_FAILURE:
-                mIsDisplayDialog = false;
-                mDialog.setText(StringConst.STR_CANNOT_CONNECT_TO_SERVER);
-                mIsDisplayDialog = true;
-                setSoftKey(-1, -1, SOFTKEY_OK);
-                return true;
+                dismissDialog();
+                addDialog(StringConst.STR_CANNOT_CONNECT_TO_SERVER, -1, SOFTKEY_OK, STATE_NOTIFY);
+                return true;                
             case Network.EVENT_END_COMMUNICATION:
                 ByteArrayInputStream aByteArray = new ByteArrayInputStream(event.mData);
                 ChessDataInputStream in = new ChessDataInputStream(aByteArray);
@@ -107,20 +122,15 @@ public class ScreenLogin extends Screen {
                     switch (returnType)
                     {
                         case Protocol.RESPONSE_LOGIN_SUCCESSFULLY:                            
+                            dismissDialog();
                             mContext.mIsLoggedIn = true;
                             mContext.mLastReceivedGoodConnect = System.currentTimeMillis();
-//                        mContext.mUserID = in.readInt();
-                            mIsDisplayDialog = false;
-                            mDialog.setText("Đăng nhập thành công.");
-                            mIsDisplayDialog = true;
-                            setSoftKey(-1, -1, SOFTKEY_OK);
+                            addDialog("Đăng nhập thành công.", -1, SOFTKEY_OK, STATE_SERVER_RETURN);
                             break;
                         case Protocol.RESPONSE_LOGIN_FAILURE:                            
+                            dismissDialog();
                             mContext.mIsLoggedIn = false;
-                            mIsDisplayDialog = false;
-                            mDialog.setText(in.readString16().toJavaString());
-                            mIsDisplayDialog = true;
-                            setSoftKey(-1, -1, SOFTKEY_OK);
+                            addDialog(in.readString16().toJavaString(), -1, SOFTKEY_OK, STATE_SERVER_RETURN);                            
                             break;
                         default:                            
                             in.skip(size);
@@ -154,6 +164,50 @@ public class ScreenLogin extends Screen {
         }
         return false;
     }
+    
+    public boolean accept(String aStr)
+    {
+        aStr = aStr.toLowerCase();
+        for (int i = 0; i < aStr.length(); i++)
+            if (!((aStr.charAt(i) >= 'a' && aStr.charAt(i) <= 'z') 
+                || (aStr.charAt(i) >= '0' && aStr.charAt(i) <= '9')
+                || (aStr.charAt(i) == '_')))
+            {
+                return false;
+            }
+        return true;
+    }
+    
+    public boolean acceptUsername(String username)
+    {
+        if (accept(username))
+        {
+            if (username.length() > 12 || username.length() == 0)
+            {
+                return false;
+            } else
+                return true;
+        }
+        return false;
+    }
+    
+    public boolean acceptPassword(String password)
+    {
+        if (accept(password))
+        {
+            if (password.length() > 6 || password.length() == 0)
+            {
+                return false;
+            } else
+                return true;
+        }
+        return false;
+    }
+    
+    public final static int STATE_WRONG_INPUT = 1;
+    public final static int STATE_SERVER_RETURN = 2;
+    public final static int STATE_CONNECTING = 3;
+    public final static int STATE_NOTIFY = 4;
     
     public void keyPressed(int keyCode)
     {        
@@ -220,36 +274,62 @@ public class ScreenLogin extends Screen {
                 //mContext.setScreen(aMainMenu);
                 if (!mIsDisplayDialog)
                 {
-                    try {
-                        ByteArrayOutputStream aByteArray = new ByteArrayOutputStream();
-                        ChessDataOutputStream aOutput = new ChessDataOutputStream(aByteArray);  
-                        mContext.mUsername = mTextBoxes[0].getEditableText().toLowerCase();
-                        mContext.mPassword = mTextBoxes[1].getEditableText().toLowerCase();
-                        aOutput.writeString16(new String16(mContext.mUsername));
-                        aOutput.writeString16(new String16(mContext.mPassword));
-                        mContext.mNetwork.sendMessage(Protocol.REQUEST_LOGIN, aByteArray.toByteArray());                    
-                        mDialog.setText(StringConst.STR_CONNECTING_SERVER);
-                        setSoftKey(SOFTKEY_CANCEL, -1, -1);
-                        mIsDisplayDialog = true;
-                    } catch (Exception e)
+                    if (!acceptUsername(mTextBoxes[0].getEditableText().toLowerCase()))
                     {
-                        e.printStackTrace();
+                        addDialog("Tên đăng nhập không hợp lệ. Tên đăng nhập dài không quá " +
+                                "12 ký tự và chỉ bao gồm chữ cài, chữ số và dấu gạch dưới.", 
+                                -1, SOFTKEY_OK, STATE_WRONG_INPUT);
+                    }
+                    else if (!acceptPassword(mTextBoxes[1].getEditableText().toLowerCase()))
+                    {
+                        addDialog("Mật khẩu không hợp lệ. Mật khẩu dài không quá 6 ký tự và chỉ bao gồm" +
+                                " chữ cái, chữ số và dấu gạch dưới.", 
+                                -1, SOFTKEY_OK, STATE_WRONG_INPUT);
+                    }
+                    else
+                    {
+                        try {
+                            ByteArrayOutputStream aByteArray = new ByteArrayOutputStream();
+                            ChessDataOutputStream aOutput = new ChessDataOutputStream(aByteArray);  
+                            mContext.mUsername = mTextBoxes[0].getEditableText().toLowerCase();
+                            mContext.mPassword = mTextBoxes[1].getEditableText().toLowerCase();
+                            aOutput.writeString16(new String16(mContext.mUsername));
+                            aOutput.writeString16(new String16(mContext.mPassword));
+                            mContext.mNetwork.sendMessage(Protocol.REQUEST_LOGIN, aByteArray.toByteArray());                    
+                            addDialog(StringConst.STR_CONNECTING_SERVER, 
+                                SOFTKEY_CANCEL, -1, STATE_CONNECTING);
+                        } catch (Exception e)
+                        {
+                            e.printStackTrace();
+                        }
                     }
                 } 
                 else {
-                    if (mRightSoftkey == SOFTKEY_OK)
+                    switch (mState)
                     {
-                        if (mContext.mIsLoggedIn)
-                        {
-                            mIsDisplayDialog = false;
-                            ScreenOnlinePlay aScreenOnline = new ScreenOnlinePlay(mContext);
-                            mContext.setScreen(aScreenOnline);                            
-                        }
-                        else
-                        {
-                            setSoftKey(SOFTKEY_BACK, -1, SOFTKEY_OK);
-                            mIsDisplayDialog = false;
-                        }
+                        case STATE_SERVER_RETURN:
+                            if (mRightSoftkey == SOFTKEY_OK)
+                            {
+                                if (mContext.mIsLoggedIn)
+                                {
+                                    mIsDisplayDialog = false;
+                                    ScreenOnlinePlay aScreenOnline = new ScreenOnlinePlay(mContext);
+                                    mContext.setScreen(aScreenOnline);                            
+                                }
+                                else
+                                {
+                                    setSoftKey(SOFTKEY_BACK, -1, SOFTKEY_OK);
+                                    mIsDisplayDialog = false;
+                                }
+                            }
+                            dismissDialog();
+                            break;
+                        case STATE_WRONG_INPUT:
+                            dismissDialog();
+                            break;   
+                        default:
+                            dismissDialog();
+                            break;
                     }
                 }
                 break;
@@ -261,10 +341,19 @@ public class ScreenLogin extends Screen {
                 }
                 else 
                 {
-                    if (mLeftSoftkey == SOFTKEY_CANCEL) {
-                        mIsDisplayDialog = false;
-                        mContext.mNetwork.stopConnection();
-                    }                    
+                    switch (mState)
+                    {
+                        case STATE_CONNECTING:
+                            if (mLeftSoftkey == SOFTKEY_CANCEL) {
+                                mIsDisplayDialog = false;
+                                mContext.mNetwork.stopConnection();                            
+                            }                        
+                            break;
+                        default:
+                            dismissDialog();
+                            break;
+                    }
+                    
                 }
                 break;          
 //            case Key.BACK:
@@ -290,6 +379,14 @@ public class ScreenLogin extends Screen {
     public void onTick(long aMilliseconds) {
         //repaint();
         //serviceRepaints();
+        if (!mDialogVector.isEmpty() && !mIsDisplayDialog) {            
+            DialogRecord aDialog = (DialogRecord) mDialogVector.elementAt(0);
+            mDialogVector.removeElementAt(0);
+            mDialog.setText(aDialog.mMessage);
+            setSoftKey(aDialog.mLeftSoftkey, -1, aDialog.mRightSoftkey);
+            mState = aDialog.mState;
+            mIsDisplayDialog = true;
+        }
     }    
     
     public void paint(Graphics g)

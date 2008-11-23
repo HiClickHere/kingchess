@@ -251,12 +251,18 @@ public class ScreenOnlinePlay extends Screen {
                                 }
                                 addDialog(in.readString16().toJavaString(), -1, SOFTKEY_OK, STATE_CANNOT_CONNECT_TO_SERVER);
                                 break;
-                            case Protocol.RESPONSE_CHALLENGE_TIMEOUT:                                
-                                if (mState == STATE_WAITING_CHALLENGE_RESPONSE) {
+                            case Protocol.RESPONSE_CHALLENGE_TIMEOUT:    
+                                System.out.println("challenge time out");
+                                if (mState == STATE_WAITING_CHALLENGE_RESPONSE) 
+                                {
+                                    dismissDialog();
+                                    addDialog("Lời thách đấu của bạn gửi đã quá thời gian cho phép nhưng vẫn chưa có " +
+                                        "trả lời. Bạn vui lòng thử lại.", -1, SOFTKEY_OK, STATE_CANNOT_CONNECT_TO_SERVER);
+                                } 
+                                else if (mState == STATE_ON_CHALLENGE)
+                                {
                                     dismissDialog();
                                 }
-                                addDialog("Lời thách đấu của bạn gửi đã quá thời gian cho phép nhưng vẫn chưa có " +
-                                        "trả lời. Bạn vui lòng thử lại.", -1, SOFTKEY_OK, STATE_CANNOT_CONNECT_TO_SERVER);
                                 break;
                             case Protocol.RESPONSE_ACCEPT_CHALLENGE:                                
                                 mContext.mIsMyTurn = true;
@@ -293,11 +299,14 @@ public class ScreenOnlinePlay extends Screen {
                                     addDialog("Chưa có ai trong danh sách bạn bè.", -1, SOFTKEY_OK, STATE_NOTIFY);
                                 }
                                 else
-                                    if (!(this instanceof ScreenLobby))
+                                    if (mState == STATE_CONNECTING)
                                     {
-                                        ScreenLobby aLobby = new ScreenLobby(mContext, (returnType == Protocol.RESPONSE_TOP_PLAYERS_LIST) ? 
-                                            ScreenLobby.LIST_TOP_PLAYER : ScreenLobby.LIST_FRIENDS);
-                                        mContext.setScreen(aLobby);
+                                        if (!(this instanceof ScreenLobby))
+                                        {
+                                            ScreenLobby aLobby = new ScreenLobby(mContext, (returnType == Protocol.RESPONSE_TOP_PLAYERS_LIST) ? 
+                                                ScreenLobby.LIST_TOP_PLAYER : ScreenLobby.LIST_FRIENDS);
+                                            mContext.setScreen(aLobby);
+                                        }
                                     }
                                 break;
                             

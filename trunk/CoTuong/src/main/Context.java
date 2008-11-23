@@ -83,7 +83,7 @@ public class Context //        implements Runnable
     public long mLastSendStillOnline;
     public long mLastReceivedGoodConnect;
     public final static long STILL_ONLINE_CYCLE_MAX = 60000;
-    public final static long STILL_ONLINE_CYCLE_MIN = 10000;
+    public final static long STILL_ONLINE_CYCLE_MIN = 5000;
     public final static long MAXIMUM_LOST_CONNECTION_PERIOD = 120000;
     public boolean mIsLoading = false;
     public MainCanvas mCanvas;
@@ -95,6 +95,14 @@ public class Context //        implements Runnable
     
     public int mOfflineLevel;
     public int mOfflineColor;
+    
+    public int mMyWinCount;
+    public int mMyLoseCount;
+    public int mMyDrawCount;
+    
+    public int mHisWinCount;
+    public int mHisLoseCount;
+    public int mHisDrawCount;
 
     //public Vector mChallengerList;
     /** Creates a new instance of Context */

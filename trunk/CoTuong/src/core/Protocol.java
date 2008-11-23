@@ -45,6 +45,7 @@ public class Protocol {
     public final static short REQUEST_MAKE_FRIEND = REQUEST_I_HAVE_NO_MOVE + 1;
     public final static short REQUEST_ACCEPT_MAKE_FRIEND = REQUEST_MAKE_FRIEND + 1;
     public final static short REQUEST_REJECT_MAKE_FRIEND = REQUEST_ACCEPT_MAKE_FRIEND + 1;
+    public final static short REQUEST_USERINFO = REQUEST_REJECT_MAKE_FRIEND + 1;
     
     public final static short RESPONSE_REGISTER_SUCCESSFULLY  = 20001;
     public final static short RESPONSE_REGISTER_FAILURE   = RESPONSE_REGISTER_SUCCESSFULLY + 1; //20002
@@ -139,4 +140,6 @@ public class Protocol {
     public final static short RESPONSE_REJECT_MAKE_FRIEND_FAILURE = RESPONSE_REJECT_MAKE_FRIEND_SUCCESSFULLY + 1;
     public final static short RESPONSE_REQUEST_DRAW_GAME = RESPONSE_REJECT_MAKE_FRIEND_FAILURE + 1;
     public final static short RESPONSE_THIS_IS_DRAW_GAME = RESPONSE_REQUEST_DRAW_GAME + 1;
+    public final static short RESPONSE_USERINFO_SUCCESSFULLY = RESPONSE_THIS_IS_DRAW_GAME + 1;
+    public final static short RESPONSE_USERINFO_FAILURE = RESPONSE_USERINFO_SUCCESSFULLY + 1;
 }
