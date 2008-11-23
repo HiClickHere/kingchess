@@ -202,31 +202,42 @@ public class ChessServlet
                     ps.setString(1, username.toJavaString());
                     ps.setString(2, password.toJavaString());
                     rs = ps.executeQuery();
+                    int status = 0;
                     boolean is_exist = false;
                     if (rs != null && rs.next()) {
                         is_exist = true;
+                        status = Integer.parseInt(rs.getString("status"));
                     }
                     rs.close();
-                    ps.close();
+                    ps.close();                    
 
                     // tồn tại tài khoản và password đúng
                     if (is_exist)
                     {
-                        ps = aConnection.prepareStatement("UPDATE user_info SET " +
-                                "status = ?, " +
-                                "opponent_name = ?, " +
-                                "is_your_turn = ?, " +
-                                "last_update_status = ? " +
-                                "WHERE username = ?;");
-                        ps.setInt(1, STATUS_ONLINE); // set as online
+                        if (status != 0)
+                        {
+                            response.add(new String16("Lỗi: Tài khoản này đang được sử dụng hoặc chưa được tự động " +
+                                    "đăng xuất khỏi hệ thống. Bạn vui lòng chờ một lát và đăng nhập lại."));
+                            response.packResponse(Protocol.RESPONSE_LOGIN_FAILURE, out);
+                        }
+                        else
+                        {
+                            ps = aConnection.prepareStatement("UPDATE user_info SET " +
+                                    "status = ?, " +
+                                    "opponent_name = ?, " +
+                                    "is_your_turn = ?, " +
+                                    "last_update_status = ? " +
+                                    "WHERE username = ?;");
+                            ps.setInt(1, STATUS_ONLINE); // set as online
 
-                        ps.setString(2, "");
-                        ps.setInt(3, MYTURN_OFF);
-                        ps.setLong(4, now);
-                        ps.setString(5, username.toJavaString());
-                        ps.executeUpdate();
-                        ps.close();
-                        response.packResponse(Protocol.RESPONSE_LOGIN_SUCCESSFULLY, out);
+                            ps.setString(2, "");
+                            ps.setInt(3, MYTURN_OFF);
+                            ps.setLong(4, now);
+                            ps.setString(5, username.toJavaString());
+                            ps.executeUpdate();
+                            ps.close();
+                            response.packResponse(Protocol.RESPONSE_LOGIN_SUCCESSFULLY, out);
+                        }
                     } 
                     else // không tồn tại tài khoản hoặc sai password
                     {

@@ -19,7 +19,7 @@ import java.io.PrintWriter;
  */
 public class PunchLogger {
     
-    public static String ERROR_LOG_FILE = "d:/error.log";
+    public static String ERROR_LOG_FILE = "/Users/dongnguyen/Desktop/error.txt";
 
     /** Creates a new instance of Logger */
     public PunchLogger() {
