@@ -150,7 +150,7 @@ public class ScreenOnlineGamePlay extends ScreenGamePlay {
                                 break;
 
                             case Protocol.RESPONSE_I_DID_A_MOVE_SUCCESSFULLY:
-                                mContext.mIsMyTurn = false;
+                                mContext.mIsMyTurn = false;                                                                
                                 break;
 
                             case Protocol.RESPONSE_I_DID_A_MOVE_FAILURE:
@@ -161,6 +161,7 @@ public class ScreenOnlineGamePlay extends ScreenGamePlay {
                                         SOFTKEY_OK,
                                         STATE_MOVE_FAIL);
                                 mContext.mIsMyTurn = true;
+                                pos.undoMakeMove();
                                 break;
 
                             case Protocol.RESPONSE_YOU_WIN_THE_GAME:                                
