@@ -74,12 +74,13 @@ public class ScreenOnlineGamePlay extends ScreenGamePlay {
 
     public void onActivate() {
         super.onActivate();
+        isEndGame = false;
     }
 
     public void onDeactivate() {
     }
     protected long mLastUpdateTheGame;
-    public final static long GAME_UPDATE_CYCLE = 10000;
+    public final static long GAME_UPDATE_CYCLE = 5000;
 
     public void onTick(long aMilliseconds) {
         super.onTick(aMilliseconds);
@@ -105,11 +106,16 @@ public class ScreenOnlineGamePlay extends ScreenGamePlay {
     public final static int STATE_END_THE_GAME = 5;
     public final static int STATE_MESSAGE = 6;
     public final static int STATE_DRAW_REQUEST = 7;
+    public final static int STATE_CONNECTING = 8;
 
     public boolean onEvent(Event event) {
         switch (event.mType) {
 
             case Network.EVENT_NETWORK_FAILURE:
+                if (mState == STATE_CONNECTING) {
+                    dismissDialog();
+                }
+                addDialog(StringConst.STR_CANNOT_CONNECT_TO_SERVER, -1, SOFTKEY_OK, STATE_MESSAGE);
                 return true;
 
             case Network.EVENT_END_COMMUNICATION:
@@ -157,10 +163,10 @@ public class ScreenOnlineGamePlay extends ScreenGamePlay {
                                 mContext.mIsMyTurn = true;
                                 break;
 
-                            case Protocol.RESPONSE_YOU_WIN_THE_GAME:
+                            case Protocol.RESPONSE_YOU_WIN_THE_GAME:                                
                                 //removeAllDialog();
                                 //dismissDialog();
-                                addDialog("Chúc mừng! Đối thủ đã hết cờ, bạn là người chiến thắng.",
+                                addDialog(in.readString16().toJavaString(),
                                         -1,
                                         SOFTKEY_OK,
                                         STATE_END_THE_GAME);
@@ -182,16 +188,17 @@ public class ScreenOnlineGamePlay extends ScreenGamePlay {
                                         -1,
                                         Graphics.HCENTER | Graphics.VCENTER);
                                 mContext.mMatchResult = Context.RESULT_WIN;
+                                isEndGame = true;
                                 break;
 
                             case Protocol.RESPONSE_NEW_MESSAGES:
                                 int numberOfMessage = in.readInt();
                                 for (int i = 0; i < numberOfMessage; i++) {
-                                    addDialog("Tin nhắn từ " + in.readString16().toJavaString() + " : " + in.readString16().toJavaString(), -1, SOFTKEY_OK, STATE_MESSAGE);
+                                    addDialog("Tin nhắn từ " + in.readString16().toJavaString() + ": " + in.readString16().toJavaString(), -1, SOFTKEY_OK, STATE_MESSAGE);
                                 }
                                 break;
 
-                            case Protocol.RESPONSE_I_HAVE_NO_MOVE_SUCCESSFULLY:
+                            case Protocol.RESPONSE_I_HAVE_NO_MOVE_SUCCESSFULLY:                                
                                 //removeAllDialog();
                                 //dismissDialog();
                                 addDialog("Bạn đã thua...",
@@ -223,7 +230,7 @@ public class ScreenOnlineGamePlay extends ScreenGamePlay {
                                         SOFTKEY_CANCEL, SOFTKEY_OK, STATE_DRAW_REQUEST);
                                 break;
 
-                            case Protocol.RESPONSE_THIS_IS_DRAW_GAME:
+                            case Protocol.RESPONSE_THIS_IS_DRAW_GAME:                                
                                 addDialog("Kết thúc. Ván cờ hòa.",
                                         -1,
                                         SOFTKEY_OK,
@@ -245,9 +252,33 @@ public class ScreenOnlineGamePlay extends ScreenGamePlay {
                                         getWidth() >> 1,
                                         -1,
                                         Graphics.HCENTER | Graphics.VCENTER);
-                                mContext.mMatchResult = Context.RESULT_LOSE;
+                                mContext.mMatchResult = Context.RESULT_DRAW;
+                                isEndGame = true;
+                                break;                                                            
+                                
+                            case Protocol.RESPONSE_USERINFO_SUCCESSFULLY:
+                                String16 name = in.readString16();
+                                if (name.toJavaString().equals(mContext.mUsername))
+                                {
+                                    mContext.mMyWinCount = in.readInt();
+                                    mContext.mMyDrawCount = in.readInt();
+                                    mContext.mMyLoseCount = in.readInt();
+                                }
+                                else
+                                {
+                                    mContext.mHisWinCount = in.readInt();
+                                    mContext.mHisDrawCount = in.readInt();
+                                    mContext.mHisLoseCount = in.readInt();
+                                }
+                                mNumOfInfo++;
+                                if (mNumOfInfo == 2)
+                                {
+                                    dismissDialog();
+                                    ScreenEndGame screenEnd = new ScreenEndGame(mContext);
+                                    mContext.setScreen(screenEnd);
+                                }
                                 break;
-
+                                
                             default:
                                 in.skip(size);
                                 break;
@@ -276,17 +307,20 @@ public class ScreenOnlineGamePlay extends ScreenGamePlay {
             case Network.EVENT_TEXTBOX_FOCUS:
                 return true;
             case Network.EVENT_TEXTBOX_INFOCUS:
-                try {
-                    ByteArrayOutputStream aByteOutputArray = new ByteArrayOutputStream();
-                    ChessDataOutputStream aOutput = new ChessDataOutputStream(aByteOutputArray);
-                    aOutput.writeString16(new String16(mContext.mUsername));
-                    aOutput.writeString16(new String16(mContext.mOpponentName));
-                    aOutput.writeString16(new String16(mContext.mInputScreen.mTextBox.getString()));
-                    mContext.mNetwork.sendMessage(Protocol.REQUEST_SEND_MESSAGE, aByteOutputArray.toByteArray());
-                } catch (Exception e) {
-                    e.printStackTrace();
+                if (mContext.mInputScreen.mTextBox.getString().length() > 0)
+                {
+                    try {
+                        ByteArrayOutputStream aByteOutputArray = new ByteArrayOutputStream();
+                        ChessDataOutputStream aOutput = new ChessDataOutputStream(aByteOutputArray);
+                        aOutput.writeString16(new String16(mContext.mUsername));
+                        aOutput.writeString16(new String16(mContext.mOpponentName));
+                        aOutput.writeString16(new String16(mContext.mInputScreen.mTextBox.getString()));
+                        mContext.mNetwork.sendMessage(Protocol.REQUEST_SEND_MESSAGE, aByteOutputArray.toByteArray());
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    mIsDisplayMenu = false;
                 }
-                mIsDisplayMenu = false;
                 return true;
         }
         return false;
@@ -296,7 +330,7 @@ public class ScreenOnlineGamePlay extends ScreenGamePlay {
     public void paint(Graphics g) {
         super.paint(g);
         
-        if (!mContext.mIsMyTurn)
+        if (!mContext.mIsMyTurn && !isEndGame)
         {
             g.setColor(0);
             int w = mContext.mTahomaOutlineGreen.getWidth("Đang đợi...");
@@ -336,7 +370,9 @@ public class ScreenOnlineGamePlay extends ScreenGamePlay {
         }        
     }
     
-    protected void clickSquare() {
+    protected void clickSquare() {  
+        if (isEndGame) return;
+        
         int sq = Position.COORD_XY(cursorX + Position.FILE_LEFT, cursorY + Position.RANK_TOP);
         if (flip) {
             sq = Position.SQUARE_FLIP(sq);
@@ -367,7 +403,9 @@ public class ScreenOnlineGamePlay extends ScreenGamePlay {
     protected int mOppXdst = 0;
     protected int mOppYdst = 0;
     
-    protected boolean responseMove() {  
+    protected boolean responseMove() { 
+        if (isEndGame) return false;
+        
         int sqSel = Position.COORD_XY(mOppXsrc + Position.FILE_LEFT, mOppYsrc + Position.RANK_TOP);
         if (!flip) {
             sqSel = Position.SQUARE_FLIP(sqSel);
@@ -417,6 +455,8 @@ public class ScreenOnlineGamePlay extends ScreenGamePlay {
         
         return result;
     }
+    
+    private int mNumOfInfo;
 
     public void keyPressed(int keyCode) 
     {
@@ -431,16 +471,17 @@ public class ScreenOnlineGamePlay extends ScreenGamePlay {
                         case STATE_ASK_FOR_LEAVE_GAME:
                             if (mLeftSoftkey == SOFTKEY_CANCEL) {
                                 dismissDialog();
+                                mIsDisplayMenu = false;
                             }
                             break;
                         case STATE_ASK_FOR_DRAW_GAME:
                             if (mLeftSoftkey == SOFTKEY_CANCEL) {
                                 dismissDialog();
+                                mIsDisplayMenu = false;
                             }
                             break;
                         case STATE_DRAW_REQUEST:
                             if (mLeftSoftkey == SOFTKEY_CANCEL) {
-                                dismissDialog();
                                 try {
                                     ByteArrayOutputStream aByteArray = new ByteArrayOutputStream();
                                     ChessDataOutputStream aOutput = new ChessDataOutputStream(aByteArray);
@@ -450,6 +491,7 @@ public class ScreenOnlineGamePlay extends ScreenGamePlay {
                                 } catch (Exception e) {
                                     e.printStackTrace();
                                 }
+                                dismissDialog();                                
                             }
                             break;
                     }
@@ -482,10 +524,21 @@ public class ScreenOnlineGamePlay extends ScreenGamePlay {
                                     e.printStackTrace();
                                 }
                                 dismissDialog();
+                                mIsDisplayMenu = false;
                             }
                             break;
                         case STATE_ASK_FOR_LEAVE_GAME:
                             if (mRightSoftkey == SOFTKEY_OK) {
+                                try {
+                                    ByteArrayOutputStream aByteArray = new ByteArrayOutputStream();
+                                    ChessDataOutputStream aOutput = new ChessDataOutputStream(aByteArray);
+                                    aOutput.writeString16(new String16(mContext.mUsername));
+                                    aOutput.writeString16(new String16(mContext.mOpponentName));
+                                    mContext.mNetwork.sendMessage(Protocol.REQUEST_LEFT_ROOM, aByteArray.toByteArray());
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+                                
                                 ScreenOnlinePlay screenOnline = new ScreenOnlinePlay(mContext);
                                 mContext.setScreen(screenOnline);
                             }
@@ -518,7 +571,7 @@ public class ScreenOnlineGamePlay extends ScreenGamePlay {
             }
         } else {
             if (!mIsDisplayMenu) {
-                if (mContext.mIsMyTurn) {
+                if (mContext.mIsMyTurn && !isEndGame) {
                     int deltaX = 0;
                     int deltaY = 0;
                     switch (keyCode) {
@@ -596,8 +649,28 @@ public class ScreenOnlineGamePlay extends ScreenGamePlay {
                                 }
                                 break;
                             case BUTTON_QUIT:
-                                ScreenEndGame screenEnd = new ScreenEndGame(mContext);
-                                mContext.setScreen(screenEnd);
+                                mNumOfInfo = 0;
+                                try {
+                                    ByteArrayOutputStream aByteArray = new ByteArrayOutputStream();
+                                    ChessDataOutputStream aOutput = new ChessDataOutputStream(aByteArray);
+                                    aOutput.writeString16(new String16(mContext.mUsername));
+                                    mContext.mNetwork.sendMessage(Protocol.REQUEST_USERINFO, aByteArray.toByteArray());
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+                                try {
+                                    ByteArrayOutputStream aByteArray = new ByteArrayOutputStream();
+                                    ChessDataOutputStream aOutput = new ChessDataOutputStream(aByteArray);
+                                    aOutput.writeString16(new String16(mContext.mOpponentName));
+                                    mContext.mNetwork.sendMessage(Protocol.REQUEST_USERINFO, aByteArray.toByteArray());
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+                                addDialog(StringConst.STR_CONNECTING_SERVER,
+                                                    SOFTKEY_CANCEL, -1,
+                                                    STATE_CONNECTING);
+//                                ScreenEndGame screenEnd = new ScreenEndGame(mContext);
+//                                mContext.setScreen(screenEnd);
                                 break;
                         }
                         break;

@@ -81,9 +81,11 @@ public class ScreenEndGame extends Screen {
 
         int column_width[] = {
             mContext.mTahomaOutlineBlue.getWidth("wwwwwwwwwwww"),
-            mContext.mTahomaOutlineBlue.getWidth("000/000"),
+            mContext.mTahomaOutlineBlue.getWidth("000"),
+            mContext.mTahomaOutlineBlue.getWidth("000"),
+            mContext.mTahomaOutlineBlue.getWidth("000"),
         };
-        String column_title[] = {"Tên", "Chỉ số"};
+        String column_title[] = {"Tên", "W", "D", "L"};
 
         int width = 0;
         for (int i = 0; i < column_width.length; i++) {
@@ -116,6 +118,10 @@ public class ScreenEndGame extends Screen {
         x += column_width[0];
         x += column_width[1];
         mContext.mTahomaOutlineRed.write(g, column_title[1], x, y, Graphics.RIGHT | Graphics.VCENTER);
+        x += column_width[2];
+        mContext.mTahomaOutlineRed.write(g, column_title[2], x, y, Graphics.RIGHT | Graphics.VCENTER);
+        x += column_width[3];
+        mContext.mTahomaOutlineRed.write(g, column_title[3], x, y, Graphics.RIGHT | Graphics.VCENTER);
 
         g.setColor(0xff6699ff);
 
@@ -124,14 +130,40 @@ public class ScreenEndGame extends Screen {
         mContext.mTahomaOutlineGreen.write(g, mContext.mUsername, x, y, Graphics.LEFT | Graphics.VCENTER);
         x += column_width[0];
         x += column_width[1];
-        mContext.mTahomaOutlineGreen.write(g, "100/100", x, y, Graphics.RIGHT | Graphics.VCENTER);
+        if (mContext.mMatchResult == Context.RESULT_WIN)
+            mContext.mTahomaOutlineGreen.write(g, "" + mContext.mMyWinCount, x, y, Graphics.RIGHT | Graphics.VCENTER);
+        else
+            mContext.mTahomaOutlineCyan.write(g, "" + mContext.mMyWinCount, x, y, Graphics.RIGHT | Graphics.VCENTER);
+        x += column_width[2];
+        if (mContext.mMatchResult == Context.RESULT_DRAW)
+            mContext.mTahomaOutlineGreen.write(g, "" + mContext.mMyDrawCount, x, y, Graphics.RIGHT | Graphics.VCENTER);
+        else
+            mContext.mTahomaOutlineCyan.write(g, "" + mContext.mMyDrawCount, x, y, Graphics.RIGHT | Graphics.VCENTER);        
+        x += column_width[3];
+        if (mContext.mMatchResult == Context.RESULT_LOSE)
+            mContext.mTahomaOutlineGreen.write(g, "" + mContext.mMyLoseCount, x, y, Graphics.RIGHT | Graphics.VCENTER);
+        else
+            mContext.mTahomaOutlineCyan.write(g, "" + mContext.mMyLoseCount, x, y, Graphics.RIGHT | Graphics.VCENTER);                
 
         y += (mContext.mTahomaOutlineBlue.getHeight() >> 1) + 4;
         x = (getWidth() - width) >> 1;
         mContext.mTahomaOutlineGreen.write(g, mContext.mOpponentName, x, y, Graphics.LEFT | Graphics.VCENTER);
         x += column_width[0];
         x += column_width[1];
-        mContext.mTahomaOutlineGreen.write(g, "100/100", x, y, Graphics.RIGHT | Graphics.VCENTER);        
+        if (mContext.mMatchResult == Context.RESULT_LOSE)
+            mContext.mTahomaOutlineGreen.write(g, "" + mContext.mHisWinCount, x, y, Graphics.RIGHT | Graphics.VCENTER);
+        else
+            mContext.mTahomaOutlineCyan.write(g, "" + mContext.mHisWinCount, x, y, Graphics.RIGHT | Graphics.VCENTER);        
+        x += column_width[2];
+        if (mContext.mMatchResult == Context.RESULT_DRAW)
+            mContext.mTahomaOutlineGreen.write(g, "" + mContext.mHisDrawCount, x, y, Graphics.RIGHT | Graphics.VCENTER);
+        else
+            mContext.mTahomaOutlineCyan.write(g, "" + mContext.mHisDrawCount, x, y, Graphics.RIGHT | Graphics.VCENTER);          
+        x += column_width[3];
+        if (mContext.mMatchResult == Context.RESULT_WIN)
+            mContext.mTahomaOutlineGreen.write(g, "" + mContext.mHisLoseCount, x, y, Graphics.RIGHT | Graphics.VCENTER);
+        else
+            mContext.mTahomaOutlineCyan.write(g, "" + mContext.mHisLoseCount, x, y, Graphics.RIGHT | Graphics.VCENTER); 
 
         mMenu.paint(g, mContext.mTahomaFontGreen,
                     mContext.mTahomaOutlineGreen,

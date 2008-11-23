@@ -102,6 +102,11 @@ public class ScreenLobby extends ScreenOnlinePlay {
             mLobbyList.addElement(aRecord);
         }
     }
+    
+    public void dismissDialog() {
+        mIsDisplayDialog = false;
+        setSoftKey(SOFTKEY_BACK, -1, SOFTKEY_MENU);
+    }
 
     public void onActivate() {
         super.onActivate();
